@@ -1,7 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueueGateway } from './queue.gateway';
-import { DepartmentState } from '@prisma/client';
+import { DepartmentState, Prisma } from '@prisma/client';
+
+type PatientFlowTxClient = Pick<PrismaService['client'], 'patientFlow'>;
 
 @Injectable()
 export class QueueService {
@@ -10,9 +16,15 @@ export class QueueService {
     private readonly queueGateway: QueueGateway,
   ) {}
 
-  async getQueueByState(states: DepartmentState[]) {
+  async getQueueByState(
+    states: DepartmentState[],
+    where?: Prisma.PatientFlowWhereInput,
+  ) {
     return this.prisma.client.patientFlow.findMany({
-      where: { currentState: { in: states } },
+      where: {
+        currentState: { in: states },
+        ...(where || {}),
+      },
       include: {
         patient: { select: { id: true, name: true, email: true } },
       },
@@ -29,8 +41,69 @@ export class QueueService {
     return flow;
   }
 
-  async advanceState(patientId: string, newState: DepartmentState, meta?: { assignedDoctorId?: string, assignedLabId?: string, assignedPharmId?: string }) {
-    const updated = await this.prisma.client.patientFlow.update({
+  async getAssignableDoctors() {
+    return this.prisma.client.user.findMany({
+      where: { role: 'DOCTOR' },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async advanceState(
+    patientId: string,
+    newState: DepartmentState,
+    meta?: {
+      assignedDoctorId?: string;
+      assignedLabId?: string;
+      assignedPharmId?: string;
+    },
+  ) {
+    const updated = await this.advanceStateInTx(
+      this.prisma.client,
+      patientId,
+      newState,
+      meta,
+    );
+    this.emitQueueStateChanged(patientId);
+    return updated;
+  }
+
+  async assignPatientToDoctor(patientId: string, doctorId: string) {
+    if (!doctorId) {
+      throw new BadRequestException('Doctor is required');
+    }
+
+    const doctor = await this.prisma.client.user.findFirst({
+      where: { id: doctorId, role: 'DOCTOR' },
+      select: { id: true },
+    });
+
+    if (!doctor) {
+      throw new BadRequestException('Selected doctor is invalid');
+    }
+
+    return this.advanceState(patientId, 'AWAITING_DOCTOR', {
+      assignedDoctorId: doctorId,
+    });
+  }
+
+  async advanceStateInTx(
+    tx: PatientFlowTxClient,
+    patientId: string,
+    newState: DepartmentState,
+    meta?: {
+      assignedDoctorId?: string;
+      assignedLabId?: string;
+      assignedPharmId?: string;
+    },
+  ) {
+    return tx.patientFlow.update({
       where: { patientId },
       data: {
         currentState: newState,
@@ -38,10 +111,10 @@ export class QueueService {
         queueEnteredAt: new Date(),
       },
     });
+  }
 
+  emitQueueStateChanged(patientId: string) {
     this.queueGateway.broadcastQueueUpdate();
     this.queueGateway.broadcastPatientSpecificUpdate(patientId);
-
-    return updated;
   }
 }

@@ -17,21 +17,28 @@ export class LaboratoryService {
   }
 
   async uploadResult(testId: string, labTechId: string, resultData: string) {
-    const test = await this.prisma.client.labTest.findUnique({ where: { id: testId } });
-    if (!test) throw new NotFoundException('Lab test not found');
+    const updatedTest = await this.prisma.client.$transaction(async (tx) => {
+      const test = await tx.labTest.findUnique({ where: { id: testId } });
+      if (!test) throw new NotFoundException('Lab test not found');
 
-    const updatedTest = await this.prisma.client.labTest.update({
-      where: { id: testId },
-      data: {
-        status: 'COMPLETED',
-        resultData, // Encrypted transparently by Prisma Extended Client
-        labTechId,
-      },
+      const completedTest = await tx.labTest.update({
+        where: { id: testId },
+        data: {
+          status: 'COMPLETED',
+          resultData,
+          labTechId,
+        },
+      });
+
+      await this.queueService.advanceStateInTx(
+        tx,
+        completedTest.patientId,
+        'AWAITING_DOCTOR_REVIEW',
+      );
+
+      return completedTest;
     });
-
-    // Automatically push the patient flow back to the doctor for review
-    await this.queueService.advanceState(updatedTest.patientId, 'AWAITING_DOCTOR_REVIEW');
-
+    this.queueService.emitQueueStateChanged(updatedTest.patientId);
     return updatedTest;
   }
 }

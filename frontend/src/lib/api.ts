@@ -3,19 +3,25 @@
 // Type-safe fetch wrappers for all backend endpoints
 // ═══════════════════════════════════════════
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 // ── Types ──────────────────────────────────
 
-export type Role = 'ADMIN' | 'DOCTOR' | 'LAB_TECH' | 'PHARMACIST' | 'NURSE' | 'PATIENT';
+export type Role =
+  | "ADMIN"
+  | "DOCTOR"
+  | "LAB_TECH"
+  | "PHARMACIST"
+  | "NURSE"
+  | "PATIENT";
 
 export type DepartmentState =
-  | 'AWAITING_TRIAGE'
-  | 'AWAITING_DOCTOR'
-  | 'AWAITING_LAB'
-  | 'AWAITING_DOCTOR_REVIEW'
-  | 'AWAITING_PHARMACY'
-  | 'DISCHARGED';
+  | "AWAITING_TRIAGE"
+  | "AWAITING_DOCTOR"
+  | "AWAITING_LAB"
+  | "AWAITING_DOCTOR_REVIEW"
+  | "AWAITING_PHARMACY"
+  | "DISCHARGED";
 
 export interface UserPayload {
   id: string;
@@ -126,35 +132,39 @@ export class ApiError extends Error {
   constructor(message: string, status: number) {
     super(message);
     this.status = status;
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
 // ── Token helpers ──────────────────────────
 
 export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("token");
 }
 
 export function setToken(token: string): void {
-  localStorage.setItem('token', token);
+  localStorage.setItem("token", token);
 }
 
 export function clearToken(): void {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 }
 
 export function getStoredUser(): UserPayload | null {
-  if (typeof window === 'undefined') return null;
-  const raw = localStorage.getItem('user');
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("user");
   if (!raw) return null;
-  try { return JSON.parse(raw); } catch { return null; }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 export function setStoredUser(user: UserPayload): void {
-  localStorage.setItem('user', JSON.stringify(user));
+  localStorage.setItem("user", JSON.stringify(user));
 }
 
 // ── Core Fetch ─────────────────────────────
@@ -165,11 +175,11 @@ async function fetchApi<T>(
 ): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
+    "Content-Type": "application/json",
+    ...((options.headers as Record<string, string>) || {}),
   };
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -182,7 +192,9 @@ async function fetchApi<T>(
     try {
       const body = await res.json();
       msg = body.message || msg;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     throw new ApiError(msg, res.status);
   }
 
@@ -195,9 +207,12 @@ async function fetchApi<T>(
 // AUTH
 // ═══════════════════════════════════════════
 
-export async function login(email: string, password: string): Promise<LoginResponse> {
-  const data = await fetchApi<LoginResponse>('/auth/login', {
-    method: 'POST',
+export async function login(
+  email: string,
+  password: string,
+): Promise<LoginResponse> {
+  const data = await fetchApi<LoginResponse>("/auth/login", {
+    method: "POST",
     body: JSON.stringify({ email, password }),
   });
   setToken(data.access_token);
@@ -206,10 +221,12 @@ export async function login(email: string, password: string): Promise<LoginRespo
 }
 
 export async function signupPatient(data: {
-  email: string; name: string; password: string;
+  email: string;
+  name: string;
+  password: string;
 }): Promise<UserPayload> {
-  return fetchApi<UserPayload>('/auth/signup/patient', {
-    method: 'POST',
+  return fetchApi<UserPayload>("/auth/signup/patient", {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
@@ -219,23 +236,56 @@ export async function signupPatient(data: {
 // ═══════════════════════════════════════════
 
 export async function getStaff(): Promise<StaffMember[]> {
-  return fetchApi<StaffMember[]>('/users/staff');
+  return fetchApi<StaffMember[]>("/users/staff");
+}
+
+export async function getDoctors(): Promise<StaffMember[]> {
+  // Prefer queue-specific endpoint for nurse assignment UI.
+  try {
+    return await fetchApi<StaffMember[]>("/queue/doctors");
+  } catch (queueErr) {
+    if (
+      queueErr instanceof ApiError &&
+      [404, 405, 500].includes(queueErr.status)
+    ) {
+      try {
+        return await fetchApi<StaffMember[]>("/users/doctors");
+      } catch (usersErr) {
+        if (
+          usersErr instanceof ApiError &&
+          [404, 405].includes(usersErr.status)
+        ) {
+          throw new ApiError(
+            "Doctors endpoint is unavailable. Restart the backend so latest routes are loaded.",
+            503,
+          );
+        }
+        throw usersErr;
+      }
+    }
+    throw queueErr;
+  }
 }
 
 export async function createStaff(data: {
-  email: string; name: string; password: string; role: Role;
+  email: string;
+  name: string;
+  password: string;
+  role: Role;
 }): Promise<StaffMember> {
-  return fetchApi<StaffMember>('/users/staff', {
-    method: 'POST',
+  return fetchApi<StaffMember>("/users/staff", {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function createPatient(data: {
-  email: string; name: string; password: string;
+  email: string;
+  name: string;
+  password: string;
 }): Promise<UserPayload & { patientFlow: PatientFlow }> {
-  return fetchApi('/users/patient', {
-    method: 'POST',
+  return fetchApi("/users/patient", {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
@@ -245,23 +295,23 @@ export async function createPatient(data: {
 // ═══════════════════════════════════════════
 
 export async function getTriageQueue(): Promise<PatientFlow[]> {
-  return fetchApi<PatientFlow[]>('/queue/triage');
+  return fetchApi<PatientFlow[]>("/queue/triage");
 }
 
 export async function getDoctorQueue(): Promise<PatientFlow[]> {
-  return fetchApi<PatientFlow[]>('/queue/doctor');
+  return fetchApi<PatientFlow[]>("/queue/doctor");
 }
 
 export async function getLabQueue(): Promise<PatientFlow[]> {
-  return fetchApi<PatientFlow[]>('/queue/laboratory');
+  return fetchApi<PatientFlow[]>("/queue/laboratory");
 }
 
 export async function getPharmacyQueue(): Promise<PatientFlow[]> {
-  return fetchApi<PatientFlow[]>('/queue/pharmacy');
+  return fetchApi<PatientFlow[]>("/queue/pharmacy");
 }
 
 export async function getNurseQueue(): Promise<PatientFlow[]> {
-  return fetchApi<PatientFlow[]>('/queue/nurse');
+  return fetchApi<PatientFlow[]>("/queue/nurse");
 }
 
 export async function getPatientState(patientId: string): Promise<PatientFlow> {
@@ -274,8 +324,18 @@ export async function advancePatient(
   assignedDoctorId?: string,
 ): Promise<PatientFlow> {
   return fetchApi<PatientFlow>(`/queue/advance/${patientId}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify({ newState, assignedDoctorId }),
+  });
+}
+
+export async function assignPatientToDoctor(
+  patientId: string,
+  doctorId: string,
+): Promise<PatientFlow> {
+  return fetchApi<PatientFlow>(`/queue/assign-doctor/${patientId}`, {
+    method: "POST",
+    body: JSON.stringify({ doctorId }),
   });
 }
 
@@ -283,25 +343,33 @@ export async function advancePatient(
 // CONSULTATION (DOCTOR)
 // ═══════════════════════════════════════════
 
-export async function createNote(patientId: string, notes: string): Promise<ConsultationNote> {
+export async function createNote(
+  patientId: string,
+  notes: string,
+): Promise<ConsultationNote> {
   return fetchApi<ConsultationNote>(`/consultation/${patientId}/note`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ notes }),
   });
 }
 
-export async function orderLab(patientId: string, testName: string): Promise<LabTest> {
+export async function orderLab(
+  patientId: string,
+  testName: string,
+): Promise<LabTest> {
   return fetchApi<LabTest>(`/consultation/${patientId}/lab`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ testName }),
   });
 }
 
 export async function prescribeDrug(
-  patientId: string, drugName: string, dosage: string,
+  patientId: string,
+  drugName: string,
+  dosage: string,
 ): Promise<Prescription> {
   return fetchApi<Prescription>(`/consultation/${patientId}/prescription`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ drugName, dosage }),
   });
 }
@@ -311,12 +379,15 @@ export async function prescribeDrug(
 // ═══════════════════════════════════════════
 
 export async function getLabWorklist(): Promise<LabTest[]> {
-  return fetchApi<LabTest[]>('/laboratory/worklist');
+  return fetchApi<LabTest[]>("/laboratory/worklist");
 }
 
-export async function uploadLabResult(testId: string, resultData: string): Promise<LabTest> {
+export async function uploadLabResult(
+  testId: string,
+  resultData: string,
+): Promise<LabTest> {
   return fetchApi<LabTest>(`/laboratory/${testId}/result`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ resultData }),
   });
 }
@@ -326,23 +397,28 @@ export async function uploadLabResult(testId: string, resultData: string): Promi
 // ═══════════════════════════════════════════
 
 export async function getPharmacyWorklist(): Promise<Prescription[]> {
-  return fetchApi<Prescription[]>('/pharmacy/worklist');
+  return fetchApi<Prescription[]>("/pharmacy/worklist");
 }
 
-export async function dispensePrescription(rxId: string): Promise<Prescription> {
+export async function dispensePrescription(
+  rxId: string,
+): Promise<Prescription> {
   return fetchApi<Prescription>(`/pharmacy/${rxId}/dispense`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({}),
   });
 }
 
 export async function getInventory(): Promise<InventoryItem[]> {
-  return fetchApi<InventoryItem[]>('/pharmacy/inventory');
+  return fetchApi<InventoryItem[]>("/pharmacy/inventory");
 }
 
-export async function addInventory(drugName: string, quantity: number): Promise<InventoryItem> {
-  return fetchApi<InventoryItem>('/pharmacy/inventory', {
-    method: 'POST',
+export async function addInventory(
+  drugName: string,
+  quantity: number,
+): Promise<InventoryItem> {
+  return fetchApi<InventoryItem>("/pharmacy/inventory", {
+    method: "POST",
     body: JSON.stringify({ drugName, quantity }),
   });
 }
@@ -352,18 +428,21 @@ export async function addInventory(drugName: string, quantity: number): Promise<
 // ═══════════════════════════════════════════
 
 export async function getDrugs(): Promise<Drug[]> {
-  return fetchApi<Drug[]>('/drugs');
+  return fetchApi<Drug[]>("/drugs");
 }
 
-export async function createDrug(name: string, description?: string): Promise<Drug> {
-  return fetchApi<Drug>('/drugs', {
-    method: 'POST',
+export async function createDrug(
+  name: string,
+  description?: string,
+): Promise<Drug> {
+  return fetchApi<Drug>("/drugs", {
+    method: "POST",
     body: JSON.stringify({ name, description }),
   });
 }
 
 export async function deleteDrug(id: string): Promise<void> {
-  return fetchApi<void>(`/drugs/${id}`, { method: 'DELETE' });
+  return fetchApi<void>(`/drugs/${id}`, { method: "DELETE" });
 }
 
 // ═══════════════════════════════════════════
@@ -371,28 +450,36 @@ export async function deleteDrug(id: string): Promise<void> {
 // ═══════════════════════════════════════════
 
 export async function getLabTestTemplates(): Promise<LabTestTemplate[]> {
-  return fetchApi<LabTestTemplate[]>('/lab-test-templates');
+  return fetchApi<LabTestTemplate[]>("/lab-test-templates");
 }
 
-export async function createLabTestTemplate(name: string, description?: string, category?: string): Promise<LabTestTemplate> {
-  return fetchApi<LabTestTemplate>('/lab-test-templates', {
-    method: 'POST',
+export async function createLabTestTemplate(
+  name: string,
+  description?: string,
+  category?: string,
+): Promise<LabTestTemplate> {
+  return fetchApi<LabTestTemplate>("/lab-test-templates", {
+    method: "POST",
     body: JSON.stringify({ name, description, category }),
   });
 }
 
 export async function deleteLabTestTemplate(id: string): Promise<void> {
-  return fetchApi<void>(`/lab-test-templates/${id}`, { method: 'DELETE' });
+  return fetchApi<void>(`/lab-test-templates/${id}`, { method: "DELETE" });
 }
 
 // ═══════════════════════════════════════════
 // PATIENT HISTORY
 // ═══════════════════════════════════════════
 
-export async function getPatientNotes(patientId: string): Promise<ConsultationNote[]> {
+export async function getPatientNotes(
+  patientId: string,
+): Promise<ConsultationNote[]> {
   return fetchApi<ConsultationNote[]>(`/consultation/${patientId}/notes`);
 }
 
-export async function getPatientLabResults(patientId: string): Promise<LabTestResult[]> {
+export async function getPatientLabResults(
+  patientId: string,
+): Promise<LabTestResult[]> {
   return fetchApi<LabTestResult[]>(`/consultation/${patientId}/lab-results`);
 }

@@ -28,4 +28,10 @@ export class UsersController {
   getStaff() {
     return this.usersService.findStaff();
   }
+
+  @Get('doctors')
+  @Roles('ADMIN', 'NURSE')
+  getDoctors() {
+    return this.usersService.findDoctors();
+  }
 }

@@ -22,7 +22,9 @@ export class PharmacyService {
         where: { id: prescriptionId },
       });
       if (!rx || rx.status !== 'PENDING') {
-        throw new BadRequestException('Prescription not found or already dispensed');
+        throw new BadRequestException(
+          'Prescription not found or already dispensed',
+        );
       }
 
       const inventory = await tx.inventory.findUnique({
@@ -37,7 +39,7 @@ export class PharmacyService {
         data: { stock: { decrement: 1 } },
       });
 
-      return tx.prescription.update({
+      const updatedRx = await tx.prescription.update({
         where: { id: prescriptionId },
         data: {
           status: 'DISPENSED',
@@ -45,10 +47,16 @@ export class PharmacyService {
           dispensedAt: new Date(),
         },
       });
+
+      await this.queueService.advanceStateInTx(
+        tx,
+        updatedRx.patientId,
+        'AWAITING_DOCTOR_REVIEW',
+      );
+
+      return updatedRx;
     });
-
-    await this.queueService.advanceState(updatedRx.patientId, 'AWAITING_DOCTOR_REVIEW');
-
+    this.queueService.emitQueueStateChanged(updatedRx.patientId);
     return updatedRx;
   }
 
