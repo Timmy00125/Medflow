@@ -26,7 +26,7 @@ const ROLE_DASHBOARD_MAP: Record<Role, string> = {
   DOCTOR: '/dashboard/doctor',
   LAB_TECH: '/dashboard/laboratory',
   PHARMACIST: '/dashboard/pharmacy',
-  NURSE: '/dashboard/admin', // Nurses share admin queue view for triage
+  NURSE: '/dashboard/nurse',
   PATIENT: '/dashboard/patient',
 };
 
