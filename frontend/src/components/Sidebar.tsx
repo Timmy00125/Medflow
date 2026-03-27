@@ -30,7 +30,13 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Admin',
     href: '/dashboard/admin',
     icon: <LayoutDashboard size={20} />,
-    roles: ['ADMIN', 'NURSE'],
+    roles: ['ADMIN'],
+  },
+  {
+    label: 'Nurse',
+    href: '/dashboard/nurse',
+    icon: <LayoutDashboard size={20} />,
+    roles: ['NURSE'],
   },
   {
     label: 'Doctor',

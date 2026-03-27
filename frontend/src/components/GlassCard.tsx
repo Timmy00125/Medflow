@@ -9,6 +9,7 @@ interface GlassCardProps {
   padding?: 'none' | 'sm' | 'md' | 'lg';
   animate?: boolean;
   delay?: number;
+  style?: React.CSSProperties;
 }
 
 const paddingMap = {
@@ -25,6 +26,7 @@ export default function GlassCard({
   padding = 'md',
   animate = true,
   delay = 0,
+  style,
 }: GlassCardProps) {
   return (
     <div
@@ -32,6 +34,7 @@ export default function GlassCard({
       style={{
         ...(padding !== 'none' ? { padding: padding === 'sm' ? '12px' : padding === 'lg' ? '28px' : '20px' } : {}),
         ...(delay > 0 ? { animationDelay: `${delay}ms` } : {}),
+        ...style,
       }}
     >
       {children}

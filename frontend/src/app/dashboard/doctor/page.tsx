@@ -13,8 +13,16 @@ import {
   prescribeDrug,
   advancePatient,
   getInventory,
+  getDrugs,
+  getLabTestTemplates,
+  getPatientNotes,
+  getPatientLabResults,
   type PatientFlow,
   type InventoryItem,
+  type Drug,
+  type LabTestTemplate,
+  type ConsultationNote,
+  type LabTestResult,
 } from '@/lib/api';
 import {
   Stethoscope,
@@ -25,16 +33,22 @@ import {
   X,
   RefreshCw,
   ChevronRight,
+  History,
+  CheckCircle,
 } from 'lucide-react';
 
 export default function DoctorDashboard() {
   const { lastUpdate } = useSocket();
   const [queue, setQueue] = useState<PatientFlow[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [drugs, setDrugs] = useState<Drug[]>([]);
+  const [labTests, setLabTests] = useState<LabTestTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPatient, setSelectedPatient] = useState<PatientFlow | null>(null);
+  const [patientNotes, setPatientNotes] = useState<ConsultationNote[]>([]);
+  const [patientLabResults, setPatientLabResults] = useState<LabTestResult[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
-  // Action forms
   const [activeAction, setActiveAction] = useState<'note' | 'lab' | 'prescription' | null>(null);
   const [noteText, setNoteText] = useState('');
   const [labTestName, setLabTestName] = useState('');
@@ -46,9 +60,16 @@ export default function DoctorDashboard() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [queueData, inv] = await Promise.all([getDoctorQueue(), getInventory()]);
+      const [queueData, inv, drugData, testData] = await Promise.all([
+        getDoctorQueue(),
+        getInventory(),
+        getDrugs(),
+        getLabTestTemplates(),
+      ]);
       setQueue(queueData);
       setInventory(inv);
+      setDrugs(drugData);
+      setLabTests(testData);
     } catch (err) {
       console.error('Failed to fetch doctor data', err);
     } finally {
@@ -56,9 +77,31 @@ export default function DoctorDashboard() {
     }
   }, []);
 
+  const fetchPatientHistory = useCallback(async (patientId: string) => {
+    try {
+      const [notes, results] = await Promise.all([
+        getPatientNotes(patientId),
+        getPatientLabResults(patientId),
+      ]);
+      setPatientNotes(notes);
+      setPatientLabResults(results);
+    } catch (err) {
+      console.error('Failed to fetch patient history', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
   }, [fetchData, lastUpdate]);
+
+  useEffect(() => {
+    if (selectedPatient) {
+      fetchPatientHistory(selectedPatient.patientId);
+    } else {
+      setPatientNotes([]);
+      setPatientLabResults([]);
+    }
+  }, [selectedPatient, fetchPatientHistory]);
 
   // Keep selected patient updated
   useEffect(() => {
@@ -276,14 +319,82 @@ export default function DoctorDashboard() {
                   Prescribe
                 </button>
                 <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowHistory(!showHistory)}
+                  style={{ marginLeft: 'auto' }}
+                >
+                  <History size={14} />
+                  {showHistory ? 'Hide' : 'Show'} History
+                </button>
+                <button
                   className="btn btn-danger btn-sm"
                   onClick={handleDischarge}
                   disabled={actionLoading}
-                  style={{ marginLeft: 'auto' }}
                 >
                   Discharge
                 </button>
               </div>
+
+              {/* Patient History Panel */}
+              {showHistory && (
+                <GlassCard className="animate-fade-in-up" padding="md" delay={0}>
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0 0 12px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <History size={14} /> Patient History
+                  </h4>
+                  
+                  <div style={{ marginBottom: 16 }}>
+                    <h5 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase' }}>
+                      Consultation Notes ({patientNotes.length})
+                    </h5>
+                    {patientNotes.length === 0 ? (
+                      <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>No consultation notes</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {patientNotes.map((note) => (
+                          <div key={note.id} style={{ padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                              <span style={{ fontWeight: 600, color: 'var(--accent)' }}>Dr. {note.doctor?.name || 'Unknown'}</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{new Date(note.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <p style={{ margin: 0, color: 'var(--text-primary)' }}>{note.notes}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h5 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase' }}>
+                      Lab Results ({patientLabResults.length})
+                    </h5>
+                    {patientLabResults.length === 0 ? (
+                      <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>No lab results</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {patientLabResults.map((result) => (
+                          <div key={result.id} style={{ padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                              <span style={{ fontWeight: 600, color: 'var(--status-lab)' }}>{result.testName}</span>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: result.status === 'COMPLETED' ? 'var(--success)' : 'var(--text-muted)' }}>
+                                {result.status === 'COMPLETED' && <CheckCircle size={12} />}
+                                {result.status}
+                              </span>
+                            </div>
+                            {result.resultData && (
+                              <p style={{ margin: 0, color: 'var(--text-primary)', padding: '6px 8px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+                                {result.resultData}
+                              </p>
+                            )}
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                              {result.labTech && `By: ${result.labTech.name}`} · {new Date(result.createdAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </GlassCard>
+              )}
 
               {/* Action panels */}
               {activeAction === 'note' && (
@@ -317,13 +428,19 @@ export default function DoctorDashboard() {
                   </h4>
                   <div>
                     <label htmlFor="lab-test-name">Test Name</label>
-                    <input
+                    <select
                       id="lab-test-name"
-                      type="text"
                       value={labTestName}
                       onChange={(e) => setLabTestName(e.target.value)}
-                      placeholder="e.g., CBC, Blood Sugar, Urinalysis"
-                    />
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                    >
+                      <option value="">Select a test...</option>
+                      {labTests.map((test) => (
+                        <option key={test.id} value={test.name}>
+                          {test.name} {test.category ? `(${test.category})` : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
                     <button
@@ -345,13 +462,19 @@ export default function DoctorDashboard() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
                       <label htmlFor="drug-name">Drug Name</label>
-                      <input
+                      <select
                         id="drug-name"
-                        type="text"
                         value={drugName}
                         onChange={(e) => setDrugName(e.target.value)}
-                        placeholder="e.g., Amoxicillin"
-                      />
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                      >
+                        <option value="">Select a drug...</option>
+                        {drugs.map((drug) => (
+                          <option key={drug.id} value={drug.name}>
+                            {drug.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label htmlFor="drug-dosage">Dosage</label>
@@ -364,7 +487,6 @@ export default function DoctorDashboard() {
                       />
                     </div>
                   </div>
-                  {/* Available inventory hint */}
                   {drugName && (
                     <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       {(() => {

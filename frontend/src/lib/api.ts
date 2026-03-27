@@ -56,6 +56,7 @@ export interface ConsultationNote {
   notes: string;
   isImmutable: boolean;
   createdAt: string;
+  doctor?: { id: string; name: string };
 }
 
 export interface LabTest {
@@ -87,6 +88,35 @@ export interface InventoryItem {
   drugName: string;
   stock: number;
   updatedAt: string;
+}
+
+export interface Drug {
+  id: string;
+  name: string;
+  description: string | null;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+export interface LabTestTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+export interface LabTestResult {
+  id: string;
+  patientId: string;
+  testName: string;
+  status: string;
+  resultData: string | null;
+  labTechId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  labTech?: { id: string; name: string };
 }
 
 // ── API Error ──────────────────────────────
@@ -230,6 +260,10 @@ export async function getPharmacyQueue(): Promise<PatientFlow[]> {
   return fetchApi<PatientFlow[]>('/queue/pharmacy');
 }
 
+export async function getNurseQueue(): Promise<PatientFlow[]> {
+  return fetchApi<PatientFlow[]>('/queue/nurse');
+}
+
 export async function getPatientState(patientId: string): Promise<PatientFlow> {
   return fetchApi<PatientFlow>(`/queue/patient/${patientId}`);
 }
@@ -311,4 +345,54 @@ export async function addInventory(drugName: string, quantity: number): Promise<
     method: 'POST',
     body: JSON.stringify({ drugName, quantity }),
   });
+}
+
+// ═══════════════════════════════════════════
+// DRUGS
+// ═══════════════════════════════════════════
+
+export async function getDrugs(): Promise<Drug[]> {
+  return fetchApi<Drug[]>('/drugs');
+}
+
+export async function createDrug(name: string, description?: string): Promise<Drug> {
+  return fetchApi<Drug>('/drugs', {
+    method: 'POST',
+    body: JSON.stringify({ name, description }),
+  });
+}
+
+export async function deleteDrug(id: string): Promise<void> {
+  return fetchApi<void>(`/drugs/${id}`, { method: 'DELETE' });
+}
+
+// ═══════════════════════════════════════════
+// LAB TEST TEMPLATES
+// ═══════════════════════════════════════════
+
+export async function getLabTestTemplates(): Promise<LabTestTemplate[]> {
+  return fetchApi<LabTestTemplate[]>('/lab-test-templates');
+}
+
+export async function createLabTestTemplate(name: string, description?: string, category?: string): Promise<LabTestTemplate> {
+  return fetchApi<LabTestTemplate>('/lab-test-templates', {
+    method: 'POST',
+    body: JSON.stringify({ name, description, category }),
+  });
+}
+
+export async function deleteLabTestTemplate(id: string): Promise<void> {
+  return fetchApi<void>(`/lab-test-templates/${id}`, { method: 'DELETE' });
+}
+
+// ═══════════════════════════════════════════
+// PATIENT HISTORY
+// ═══════════════════════════════════════════
+
+export async function getPatientNotes(patientId: string): Promise<ConsultationNote[]> {
+  return fetchApi<ConsultationNote[]>(`/consultation/${patientId}/notes`);
+}
+
+export async function getPatientLabResults(patientId: string): Promise<LabTestResult[]> {
+  return fetchApi<LabTestResult[]>(`/consultation/${patientId}/lab-results`);
 }

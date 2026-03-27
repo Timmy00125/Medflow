@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
 import { ConsultationService } from './consultation.service';
 import { JwtAuthGuard } from '../../core/security/jwt-auth.guard';
 import { RolesGuard } from '../../core/security/roles.guard';
@@ -7,9 +7,19 @@ import { CurrentUser } from '../../core/security/current-user.decorator';
 
 @Controller('consultation')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('DOCTOR')
+@Roles('DOCTOR', 'ADMIN')
 export class ConsultationController {
   constructor(private readonly consultationService: ConsultationService) {}
+
+  @Get(':patientId/notes')
+  getNotes(@Param('patientId') patientId: string) {
+    return this.consultationService.getPatientNotes(patientId);
+  }
+
+  @Get(':patientId/lab-results')
+  getLabResults(@Param('patientId') patientId: string) {
+    return this.consultationService.getPatientLabResults(patientId);
+  }
 
   @Post(':patientId/note')
   createNote(

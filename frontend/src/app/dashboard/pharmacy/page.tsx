@@ -8,27 +8,39 @@ import QueueTable, { type QueueColumn } from '@/components/QueueTable';
 import { useSocket } from '@/hooks/useSocket';
 import {
   getPharmacyWorklist, dispensePrescription, getInventory, addInventory,
-  type Prescription, type InventoryItem,
+  getDrugs, createDrug,
+  type Prescription, type InventoryItem, type Drug,
 } from '@/lib/api';
-import { Pill, Package, Plus, CheckCircle, AlertTriangle, RefreshCw, X } from 'lucide-react';
+import { Pill, Package, Plus, CheckCircle, AlertTriangle, RefreshCw, X, Trash2 } from 'lucide-react';
 
 export default function PharmacyDashboard() {
   const { lastUpdate } = useSocket();
   const [worklist, setWorklist] = useState<Prescription[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [drugs, setDrugs] = useState<Drug[]>([]);
   const [loading, setLoading] = useState(true);
   const [dispensingId, setDispensingId] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [showInvForm, setShowInvForm] = useState(false);
+  const [showDrugForm, setShowDrugForm] = useState(false);
   const [invDrug, setInvDrug] = useState('');
   const [invQty, setInvQty] = useState('');
   const [invSubmitting, setInvSubmitting] = useState(false);
+  const [newDrugName, setNewDrugName] = useState('');
+  const [newDrugDesc, setNewDrugDesc] = useState('');
+  const [drugSubmitting, setDrugSubmitting] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
-      const [wl, inv] = await Promise.all([getPharmacyWorklist(), getInventory()]);
-      setWorklist(wl); setInventory(inv);
+      const [wl, inv, drugData] = await Promise.all([
+        getPharmacyWorklist(),
+        getInventory(),
+        getDrugs(),
+      ]);
+      setWorklist(wl);
+      setInventory(inv);
+      setDrugs(drugData);
     } catch (err) { console.error(err); } finally { setLoading(false); }
   }, []);
 
@@ -38,7 +50,7 @@ export default function PharmacyDashboard() {
     setDispensingId(rxId); setSuccessMsg(''); setErrorMsg('');
     try {
       await dispensePrescription(rxId);
-      setSuccessMsg(`"${drug}" dispensed. Patient discharged.`);
+      setSuccessMsg(`"${drug}" dispensed successfully.`);
       fetchData();
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to dispense');
@@ -56,6 +68,17 @@ export default function PharmacyDashboard() {
     } finally { setInvSubmitting(false); }
   };
 
+  const handleAddDrug = async (e: React.FormEvent) => {
+    e.preventDefault(); setDrugSubmitting(true); setSuccessMsg(''); setErrorMsg('');
+    try {
+      await createDrug(newDrugName, newDrugDesc);
+      setSuccessMsg(`Drug "${newDrugName}" added successfully.`);
+      setNewDrugName(''); setNewDrugDesc(''); setShowDrugForm(false); fetchData();
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to add drug');
+    } finally { setDrugSubmitting(false); }
+  };
+
   const rxCols: QueueColumn[] = [
     { key: 'patient.name', label: 'Patient' },
     { key: 'drugName', label: 'Drug' },
@@ -70,6 +93,7 @@ export default function PharmacyDashboard() {
     }},
   ];
   const lowStock = inventory.filter(i => i.stock <= 5).length;
+  const customDrugs = drugs.filter(d => !d.isDefault);
 
   return (
     <DashboardShell title="Pharmacy Dashboard" subtitle={`${worklist.length} prescriptions pending`}
@@ -99,16 +123,37 @@ export default function PharmacyDashboard() {
         <GlassCard padding="none" delay={150}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Inventory</h3>
-            <button className="btn btn-secondary btn-sm" onClick={() => setShowInvForm(!showInvForm)}><Plus size={14} /> Add Stock</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => { setShowDrugForm(!showDrugForm); setShowInvForm(false); }}><Plus size={14} /> Add Drug</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => { setShowInvForm(!showInvForm); setShowDrugForm(false); }}><Package size={14} /> Add Stock</button>
+            </div>
           </div>
           {showInvForm && <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'rgba(100,160,255,0.02)' }} className="animate-fade-in-down">
             <form onSubmit={handleAddInv} style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-              <div style={{ flex: 1 }}><label htmlFor="inv-d">Drug</label><input id="inv-d" type="text" value={invDrug} onChange={e => setInvDrug(e.target.value)} placeholder="Amoxicillin" required /></div>
+              <div style={{ flex: 1 }}>
+                <label htmlFor="inv-d">Drug</label>
+                <select id="inv-d" value={invDrug} onChange={e => setInvDrug(e.target.value)} required style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+                  <option value="">Select a drug...</option>
+                  {drugs.map(drug => <option key={drug.id} value={drug.name}>{drug.name}</option>)}
+                </select>
+              </div>
               <div style={{ width: 100 }}><label htmlFor="inv-q">Qty</label><input id="inv-q" type="number" value={invQty} onChange={e => setInvQty(e.target.value)} placeholder="50" min="1" required /></div>
               <button type="submit" className="btn btn-primary btn-sm" disabled={invSubmitting} style={{ height: 38 }}>{invSubmitting ? <div className="spinner" /> : 'Add'}</button>
             </form>
           </div>}
+          {showDrugForm && <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'rgba(52,211,153,0.02)' }} className="animate-fade-in-down">
+            <form onSubmit={handleAddDrug} style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+              <div style={{ flex: 1 }}><label htmlFor="new-drug">Drug Name</label><input id="new-drug" type="text" value={newDrugName} onChange={e => setNewDrugName(e.target.value)} placeholder="New Drug Name" required /></div>
+              <div style={{ flex: 1 }}><label htmlFor="new-desc">Description (optional)</label><input id="new-desc" type="text" value={newDrugDesc} onChange={e => setNewDrugDesc(e.target.value)} placeholder="Description" /></div>
+              <button type="submit" className="btn btn-primary btn-sm" disabled={drugSubmitting} style={{ height: 38 }}>{drugSubmitting ? <div className="spinner" /> : 'Add Drug'}</button>
+            </form>
+          </div>}
           <QueueTable columns={invCols} data={inventory as unknown as Record<string, unknown>[]} emptyMessage="No inventory" isLoading={loading} />
+          {customDrugs.length > 0 && (
+            <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', background: 'rgba(52,211,153,0.02)' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 8px' }}>Custom drugs: {customDrugs.map(d => d.name).join(', ')}</p>
+            </div>
+          )}
         </GlassCard>
       </div>
       <style>{`@media(max-width:900px){div[style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}}`}</style>

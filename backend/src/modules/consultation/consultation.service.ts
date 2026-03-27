@@ -14,8 +14,24 @@ export class ConsultationService {
       data: {
         doctorId,
         patientId,
-        notes, // Encrypted by Prisma extension automatically at-rest!
+        notes,
       },
+    });
+  }
+
+  async getPatientNotes(patientId: string) {
+    return this.prisma.client.consultationNote.findMany({
+      where: { patientId },
+      include: { doctor: { select: { id: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getPatientLabResults(patientId: string) {
+    return this.prisma.client.labTest.findMany({
+      where: { patientId },
+      include: { labTech: { select: { id: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

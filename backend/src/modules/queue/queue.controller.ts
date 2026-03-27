@@ -22,6 +22,12 @@ export class QueueController {
     return this.queueService.getQueueByState(['AWAITING_DOCTOR', 'AWAITING_DOCTOR_REVIEW']);
   }
 
+  @Get('nurse')
+  @Roles('ADMIN', 'NURSE')
+  getNurseQueue() {
+    return this.queueService.getQueueByState(['AWAITING_DOCTOR_REVIEW']);
+  }
+
   @Get('laboratory')
   @Roles('ADMIN', 'LAB_TECH')
   getLabQueue() {

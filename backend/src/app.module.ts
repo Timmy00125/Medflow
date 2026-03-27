@@ -8,6 +8,8 @@ import { QueueModule } from './modules/queue/queue.module';
 import { ConsultationModule } from './modules/consultation/consultation.module';
 import { LaboratoryModule } from './modules/laboratory/laboratory.module';
 import { PharmacyModule } from './modules/pharmacy/pharmacy.module';
+import { DrugModule } from './modules/drug/drug.module';
+import { LabTestTemplateModule } from './modules/lab-test-template/lab-test-template.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { PharmacyModule } from './modules/pharmacy/pharmacy.module';
     ConsultationModule,
     LaboratoryModule,
     PharmacyModule,
+    DrugModule,
+    LabTestTemplateModule,
   ],
   controllers: [AppController],
   providers: [AppService],

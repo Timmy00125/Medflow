@@ -6,23 +6,30 @@ import GlassCard from '@/components/GlassCard';
 import StatCard from '@/components/StatCard';
 import QueueTable, { type QueueColumn } from '@/components/QueueTable';
 import { useSocket } from '@/hooks/useSocket';
-import { getLabWorklist, uploadLabResult, type LabTest } from '@/lib/api';
-import { FlaskConical, Upload, CheckCircle, RefreshCw, X, FileText } from 'lucide-react';
+import { getLabWorklist, uploadLabResult, getLabTestTemplates, createLabTestTemplate, type LabTest, type LabTestTemplate } from '@/lib/api';
+import { FlaskConical, Upload, CheckCircle, RefreshCw, X, FileText, Plus } from 'lucide-react';
 
 export default function LaboratoryDashboard() {
   const { lastUpdate } = useSocket();
   const [worklist, setWorklist] = useState<LabTest[]>([]);
+  const [labTests, setLabTests] = useState<LabTestTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTest, setSelectedTest] = useState<LabTest | null>(null);
   const [resultData, setResultData] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [showTestForm, setShowTestForm] = useState(false);
+  const [newTestName, setNewTestName] = useState('');
+  const [newTestDesc, setNewTestDesc] = useState('');
+  const [newTestCategory, setNewTestCategory] = useState('');
+  const [testSubmitting, setTestSubmitting] = useState(false);
 
   const fetchWorklist = useCallback(async () => {
     try {
-      const data = await getLabWorklist();
+      const [data, templates] = await Promise.all([getLabWorklist(), getLabTestTemplates()]);
       setWorklist(data);
+      setLabTests(templates);
     } catch (err) {
       console.error('Failed to fetch lab worklist', err);
     } finally {
@@ -51,6 +58,28 @@ export default function LaboratoryDashboard() {
       setSubmitting(false);
     }
   };
+
+  const handleAddTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTestSubmitting(true);
+    setSuccessMsg('');
+    setErrorMsg('');
+    try {
+      await createLabTestTemplate(newTestName, newTestDesc, newTestCategory);
+      setSuccessMsg(`Test "${newTestName}" added successfully.`);
+      setNewTestName('');
+      setNewTestDesc('');
+      setNewTestCategory('');
+      setShowTestForm(false);
+      fetchWorklist();
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to add test');
+    } finally {
+      setTestSubmitting(false);
+    }
+  };
+
+  const customTests = labTests.filter(t => !t.isDefault);
 
   const columns: QueueColumn[] = [
     { key: 'patient.name', label: 'Patient' },
@@ -143,7 +172,42 @@ export default function LaboratoryDashboard() {
           accentColor="var(--accent)"
           delay={50}
         />
+        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <div style={{ color: 'var(--status-lab)' }}><FlaskConical size={20} /></div>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Test Templates</span>
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 8px' }}>{labTests.length} available</p>
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowTestForm(!showTestForm)}>
+            <Plus size={14} /> Add Custom Test
+          </button>
+        </div>
       </div>
+
+      {showTestForm && (
+        <GlassCard className="animate-fade-in-down" padding="md" delay={0} style={{ marginBottom: 20 }}>
+          <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0 0 12px', color: 'var(--text-primary)' }}>
+            Add Custom Lab Test
+          </h4>
+          <form onSubmit={handleAddTest} style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+            <div style={{ flex: 1 }}>
+              <label htmlFor="test-name">Test Name</label>
+              <input id="test-name" type="text" value={newTestName} onChange={e => setNewTestName(e.target.value)} placeholder="e.g., Dengue Test" required />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label htmlFor="test-cat">Category (optional)</label>
+              <input id="test-cat" type="text" value={newTestCategory} onChange={e => setNewTestCategory(e.target.value)} placeholder="e.g., Virology" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label htmlFor="test-desc">Description (optional)</label>
+              <input id="test-desc" type="text" value={newTestDesc} onChange={e => setNewTestDesc(e.target.value)} placeholder="Brief description" />
+            </div>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={testSubmitting} style={{ height: 38 }}>
+              {testSubmitting ? <div className="spinner" /> : <><Plus size={14} /> Add</>}
+            </button>
+          </form>
+        </GlassCard>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '20px' }}>
         {/* Worklist table */}

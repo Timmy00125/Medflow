@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 
@@ -17,8 +17,7 @@ export class PharmacyService {
   }
 
   async dispense(prescriptionId: string, pharmacistId: string) {
-    // Utilize Prisma interactive transaction for robust ACID guarantees!
-    return await this.prisma.client.$transaction(async (tx) => {
+    const updatedRx = await this.prisma.client.$transaction(async (tx) => {
       const rx = await tx.prescription.findUnique({
         where: { id: prescriptionId },
       });
@@ -26,7 +25,6 @@ export class PharmacyService {
         throw new BadRequestException('Prescription not found or already dispensed');
       }
 
-      // Verify Stock limits safely
       const inventory = await tx.inventory.findUnique({
         where: { drugName: rx.drugName },
       });
@@ -34,14 +32,12 @@ export class PharmacyService {
         throw new BadRequestException(`Insufficient stock for ${rx.drugName}`);
       }
 
-      // Safely decrement atomic inventory
       await tx.inventory.update({
         where: { drugName: rx.drugName },
         data: { stock: { decrement: 1 } },
       });
 
-      // Update the explicit prescription details
-      const updatedRx = await tx.prescription.update({
+      return tx.prescription.update({
         where: { id: prescriptionId },
         data: {
           status: 'DISPENSED',
@@ -49,12 +45,11 @@ export class PharmacyService {
           dispensedAt: new Date(),
         },
       });
-
-      // Transition the state machine!
-      await this.queueService.advanceState(rx.patientId, 'DISCHARGED');
-
-      return updatedRx;
     });
+
+    await this.queueService.advanceState(updatedRx.patientId, 'AWAITING_DOCTOR_REVIEW');
+
+    return updatedRx;
   }
 
   async addInventory(drugName: string, quantity: number) {
