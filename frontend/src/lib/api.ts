@@ -175,6 +175,15 @@ export async function login(email: string, password: string): Promise<LoginRespo
   return data;
 }
 
+export async function signupPatient(data: {
+  email: string; name: string; password: string;
+}): Promise<UserPayload> {
+  return fetchApi<UserPayload>('/auth/signup/patient', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 // ═══════════════════════════════════════════
 // USERS / STAFF
 // ═══════════════════════════════════════════

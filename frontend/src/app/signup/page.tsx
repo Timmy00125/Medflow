@@ -4,35 +4,38 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth, getDashboardPath } from '@/context/AuthContext';
-import { Heart, Mail, Lock, ArrowRight } from 'lucide-react';
+import { signupPatient } from '@/lib/api';
+import { Heart, User, Mail, Lock, ArrowRight } from 'lucide-react';
 
-export default function LoginPage() {
+export default function SignupPage() {
   const { login, user, isLoading } = useAuth();
   const router = useRouter();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (!isLoading && user) {
       router.replace(getDashboardPath(user.role));
     }
   }, [user, isLoading, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setSubmitting(true);
+
     try {
+      await signupPatient({ name, email, password });
       await login(email, password);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      setError(err instanceof Error ? err.message : 'Signup failed. Please try again.');
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
   return (
     <div
@@ -46,15 +49,14 @@ export default function LoginPage() {
         overflow: 'hidden',
       }}
     >
-      {/* Ambient glow orbs */}
       <div
         style={{
           position: 'absolute' as const,
-          width: '500px',
-          height: '500px',
+          width: '520px',
+          height: '520px',
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(34, 211, 238, 0.06) 0%, transparent 70%)',
-          top: '-150px',
+          top: '-160px',
           right: '-100px',
           pointerEvents: 'none' as const,
         }}
@@ -62,11 +64,11 @@ export default function LoginPage() {
       <div
         style={{
           position: 'absolute' as const,
-          width: '400px',
-          height: '400px',
+          width: '420px',
+          height: '420px',
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(167, 139, 250, 0.05) 0%, transparent 70%)',
-          bottom: '-100px',
+          bottom: '-120px',
           left: '-100px',
           pointerEvents: 'none' as const,
         }}
@@ -76,19 +78,18 @@ export default function LoginPage() {
         className="glass animate-scale-in"
         style={{
           width: '100%',
-          maxWidth: '420px',
+          maxWidth: '430px',
           padding: '40px',
           position: 'relative' as const,
           zIndex: 1,
         }}
       >
-        {/* Logo */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column' as const,
             alignItems: 'center',
-            marginBottom: '32px',
+            marginBottom: '28px',
           }}
         >
           <div
@@ -115,7 +116,7 @@ export default function LoginPage() {
               letterSpacing: '-0.02em',
             }}
           >
-            MedFlow
+            Create Patient Account
           </h1>
           <p
             style={{
@@ -124,14 +125,40 @@ export default function LoginPage() {
               margin: '6px 0 0',
             }}
           >
-            Sign in to your telemedicine dashboard
+            Register to track your consultation and queue status
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' as const, gap: '18px' }}>
-          {/* Email */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
           <div>
-            <label htmlFor="login-email">Email Address</label>
+            <label htmlFor="signup-name">Full Name</label>
+            <div style={{ position: 'relative' as const }}>
+              <User
+                size={16}
+                style={{
+                  position: 'absolute' as const,
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-muted)',
+                  pointerEvents: 'none' as const,
+                }}
+              />
+              <input
+                id="signup-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
+                required
+                autoFocus
+                style={{ paddingLeft: '38px' }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="signup-email">Email Address</label>
             <div style={{ position: 'relative' as const }}>
               <Mail
                 size={16}
@@ -145,21 +172,19 @@ export default function LoginPage() {
                 }}
               />
               <input
-                id="login-email"
+                id="signup-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                autoFocus
                 style={{ paddingLeft: '38px' }}
               />
             </div>
           </div>
 
-          {/* Password */}
           <div>
-            <label htmlFor="login-password">Password</label>
+            <label htmlFor="signup-password">Password</label>
             <div style={{ position: 'relative' as const }}>
               <Lock
                 size={16}
@@ -173,18 +198,18 @@ export default function LoginPage() {
                 }}
               />
               <input
-                id="login-password"
+                id="signup-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Choose a secure password"
                 required
+                minLength={8}
                 style={{ paddingLeft: '38px' }}
               />
             </div>
           </div>
 
-          {/* Error */}
           {error && (
             <div
               className="animate-fade-in-down"
@@ -202,11 +227,10 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={submitting || !email || !password}
+            disabled={submitting || !name || !email || !password}
             style={{
               width: '100%',
               marginTop: '4px',
@@ -218,26 +242,25 @@ export default function LoginPage() {
               <div className="spinner" style={{ width: '18px', height: '18px', borderWidth: '2px' }} />
             ) : (
               <>
-                Sign In
+                Create Account
                 <ArrowRight size={16} />
               </>
             )}
           </button>
         </form>
 
-        {/* Footer hint */}
         <p
           style={{
-            fontSize: '0.6875rem',
+            fontSize: '0.75rem',
             color: 'var(--text-muted)',
             textAlign: 'center' as const,
-            marginTop: '24px',
+            marginTop: '22px',
             lineHeight: 1.6,
           }}
         >
-          Don&apos;t have an account?{' '}
-          <Link href="/signup" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
-            Create a patient account
+          Already have an account?{' '}
+          <Link href="/login" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
+            Sign in
           </Link>
         </p>
       </div>

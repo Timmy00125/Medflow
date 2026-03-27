@@ -56,11 +56,29 @@ export class UsersService {
   }
 
   async createPatient(dto: CreatePatientDto) {
-    const existingUser = await this.prisma.client.user.findUnique({ where: { email: dto.email }});
+    const user = await this.createPatientAccount(dto);
+
+    return { id: user.id, email: user.email, name: user.name, role: user.role, patientFlow: user.patientFlow };
+  }
+
+  async registerPatient(dto: CreatePatientDto) {
+    const user = await this.createPatientAccount(dto);
+    return { id: user.id, email: user.email, name: user.name, role: user.role };
+  }
+
+  async findStaff() {
+    return this.prisma.client.user.findMany({
+      where: { role: { not: 'PATIENT' } },
+      select: { id: true, email: true, name: true, role: true, createdAt: true },
+    });
+  }
+
+  private async createPatientAccount(dto: CreatePatientDto) {
+    const existingUser = await this.prisma.client.user.findUnique({ where: { email: dto.email } });
     if (existingUser) throw new BadRequestException('Email already in use');
 
     const hashedPassword = await argon2.hash(dto.password);
-    const user = await this.prisma.client.user.create({
+    return this.prisma.client.user.create({
       data: {
         email: dto.email,
         name: dto.name,
@@ -69,21 +87,12 @@ export class UsersService {
         patientFlow: {
           create: {
             currentState: 'AWAITING_TRIAGE',
-          }
-        }
+          },
+        },
       },
       include: {
         patientFlow: true,
-      }
-    });
-
-    return { id: user.id, email: user.email, name: user.name, role: user.role, patientFlow: user.patientFlow };
-  }
-
-  async findStaff() {
-    return this.prisma.client.user.findMany({
-      where: { role: { not: 'PATIENT' } },
-      select: { id: true, email: true, name: true, role: true, createdAt: true },
+      },
     });
   }
 }
