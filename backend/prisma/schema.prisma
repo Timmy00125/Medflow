@@ -35,15 +35,15 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relationships
-  patientFlow          PatientFlow?       @relation("PatientFlowUser")
-  doctorConsultations  ConsultationNote[] @relation("DoctorConsultations")
-  patientConsultations ConsultationNote[] @relation("PatientConsultations")
-  dispensedPrescriptions Prescription[]   @relation("PharmacistPrescriptions")
-  conductedTests       LabTest[]          @relation("LabTechTests")
-  patientLabTests      LabTest[]          @relation("PatientLabTests")
-  patientPrescriptions Prescription[]     @relation("PatientPrescriptions")
-  patientVitals        Vitals[]           @relation("PatientVitals")
-  nurseVitals          Vitals[]           @relation("NurseVitals")
+  patientFlow            PatientFlow?       @relation("PatientFlowUser")
+  doctorConsultations    ConsultationNote[] @relation("DoctorConsultations")
+  patientConsultations   ConsultationNote[] @relation("PatientConsultations")
+  dispensedPrescriptions Prescription[]     @relation("PharmacistPrescriptions")
+  conductedTests         LabTest[]          @relation("LabTechTests")
+  patientLabTests        LabTest[]          @relation("PatientLabTests")
+  patientPrescriptions   Prescription[]     @relation("PatientPrescriptions")
+  patientVitals          Vitals[]           @relation("PatientVitals")
+  nurseVitals            Vitals[]           @relation("NurseVitals")
 }
 
 model PatientFlow {
@@ -59,40 +59,40 @@ model PatientFlow {
 }
 
 model ConsultationNote {
-  id            String   @id @default(uuid())
-  patient       User     @relation("PatientConsultations", fields: [patientId], references: [id], onDelete: Cascade)
-  patientId     String
-  doctor        User     @relation("DoctorConsultations", fields: [doctorId], references: [id])
-  doctorId      String
-  notes         String   // Highly sensitive PII!
-  isImmutable   Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  id          String   @id @default(uuid())
+  patient     User     @relation("PatientConsultations", fields: [patientId], references: [id], onDelete: Cascade)
+  patientId   String
+  doctor      User     @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  doctorId    String
+  notes       String // Highly sensitive PII!
+  isImmutable Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 model LabTest {
-  id            String   @id @default(uuid())
-  patient       User     @relation("PatientLabTests", fields: [patientId], references: [id], onDelete: Cascade)
-  patientId     String
-  testName      String
-  status        String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
-  resultData    String?  // Highly sensitive PII!
-  labTech       User?    @relation("LabTechTests", fields: [labTechId], references: [id])
-  labTechId     String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id         String   @id @default(uuid())
+  patient    User     @relation("PatientLabTests", fields: [patientId], references: [id], onDelete: Cascade)
+  patientId  String
+  testName   String
+  status     String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  resultData String? // Highly sensitive PII!
+  labTech    User?    @relation("LabTechTests", fields: [labTechId], references: [id])
+  labTechId  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Prescription {
-  id            String   @id @default(uuid())
-  patient       User     @relation("PatientPrescriptions", fields: [patientId], references: [id], onDelete: Cascade)
-  patientId     String
-  drugName      String
-  dosage        String
-  status        String   @default("PENDING") // PENDING, DISPENSED
-  pharmacist    User?    @relation("PharmacistPrescriptions", fields: [pharmacistId], references: [id])
-  pharmacistId  String?
-  createdAt     DateTime @default(now())
-  dispensedAt   DateTime?
+  id           String    @id @default(uuid())
+  patient      User      @relation("PatientPrescriptions", fields: [patientId], references: [id], onDelete: Cascade)
+  patientId    String
+  drugName     String
+  dosage       String
+  status       String    @default("PENDING") // PENDING, DISPENSED
+  pharmacist   User?     @relation("PharmacistPrescriptions", fields: [pharmacistId], references: [id])
+  pharmacistId String?
+  createdAt    DateTime  @default(now())
+  dispensedAt  DateTime?
 }
 
 model Inventory {
