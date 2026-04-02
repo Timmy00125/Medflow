@@ -13,8 +13,10 @@ import {
   ApiError,
   advancePatient,
   assignPatientToDoctor,
+  recordVitals,
   type PatientFlow,
   type StaffMember,
+  type Vitals,
 } from "@/lib/api";
 import {
   ClipboardList,
@@ -36,6 +38,16 @@ export default function NurseDashboard() {
   const [actionLoading, setActionLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  const [vitalsModalOpen, setVitalsModalOpen] = useState(false);
+  const [selectedIntakePatient, setSelectedIntakePatient] = useState<PatientFlow | null>(null);
+  const [intakeDoctorId, setIntakeDoctorId] = useState("");
+  const [vitalsData, setVitalsData] = useState<Partial<Vitals>>({
+    temperature: undefined,
+    bloodPressure: "",
+    heartRate: undefined,
+    weight: undefined,
+  });
 
   const fetchQueues = useCallback(async () => {
     try {
@@ -78,8 +90,8 @@ export default function NurseDashboard() {
     fetchQueues();
   }, [fetchQueues, lastUpdate]);
 
-  const handleAssignToDoctor = async (patientId: string, doctorId: string) => {
-    if (!doctorId) {
+  const handleIntakeSubmit = async () => {
+    if (!selectedIntakePatient || !intakeDoctorId) {
       setErrorMsg("Please select a doctor before assigning the patient");
       return;
     }
@@ -87,17 +99,19 @@ export default function NurseDashboard() {
     setSuccessMsg("");
     setErrorMsg("");
     try {
-      await assignPatientToDoctor(patientId, doctorId);
-      setSuccessMsg("Patient assigned to doctor");
-      setDoctorSelectionByPatient((prev) => {
-        const next = { ...prev };
-        delete next[patientId];
-        return next;
-      });
+      // First record vitals
+      await recordVitals(selectedIntakePatient.patientId, vitalsData);
+      // Then assign doctor (which advances state)
+      await assignPatientToDoctor(selectedIntakePatient.patientId, intakeDoctorId);
+      
+      setSuccessMsg("Patient intake complete. Vitals recorded and assigned to doctor.");
+      setVitalsModalOpen(false);
+      setSelectedIntakePatient(null);
+      setVitalsData({ temperature: undefined, bloodPressure: "", heartRate: undefined, weight: undefined });
       fetchQueues();
     } catch (err: unknown) {
       setErrorMsg(
-        err instanceof Error ? err.message : "Failed to assign patient",
+        err instanceof Error ? err.message : "Failed to process intake",
       );
     } finally {
       setActionLoading(false);
@@ -258,51 +272,23 @@ export default function NurseDashboard() {
             isLoading={loading}
             actions={(row) => {
               const patient = row as unknown as PatientFlow;
-              const selectedDoctorId =
-                doctorSelectionByPatient[patient.patientId] || "";
               return (
                 <div
                   style={{
                     display: "flex",
-                    gap: "6px",
                     justifyContent: "flex-end",
                   }}
                 >
-                  <select
-                    id={`assign-doctor-${patient.patientId}`}
-                    value={selectedDoctorId}
-                    disabled={actionLoading || doctors.length === 0}
-                    style={{
-                      padding: "4px 8px",
-                      fontSize: "0.75rem",
-                      maxWidth: "160px",
-                    }}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      setDoctorSelectionByPatient((prev) => ({
-                        ...prev,
-                        [patient.patientId]: e.target.value,
-                      }));
-                    }}
-                  >
-                    <option value="">Assign Doctor...</option>
-                    {doctors.map((doctor) => (
-                      <option key={doctor.id} value={doctor.id}>
-                        {doctor.name}
-                      </option>
-                    ))}
-                  </select>
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAssignToDoctor(patient.patientId, selectedDoctorId);
+                      setSelectedIntakePatient(patient);
+                      setVitalsModalOpen(true);
                     }}
-                    disabled={
-                      actionLoading || !selectedDoctorId || doctors.length === 0
-                    }
+                    disabled={actionLoading || doctors.length === 0}
                   >
-                    Assign
+                    Intake Patient
                   </button>
                 </div>
               );
@@ -367,7 +353,120 @@ export default function NurseDashboard() {
             grid-template-columns: 1fr !important;
           }
         }
+        
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 100;
+          backdrop-filter: blur(4px);
+        }
+        .modal-content {
+          background: var(--bg-primary);
+          padding: 24px;
+          border-radius: var(--radius-lg);
+          width: 90%;
+          max-width: 500px;
+          max-height: 90vh;
+          overflow-y: auto;
+          border: 1px solid var(--border);
+          box-shadow: var(--shadow-lg);
+        }
       `}</style>
+      
+      {vitalsModalOpen && selectedIntakePatient && (
+        <div className="modal-overlay animate-fade-in" onClick={() => setVitalsModalOpen(false)}>
+          <div className="modal-content animate-fade-in-up" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Patient Intake</h3>
+              <button className="btn-icon" onClick={() => setVitalsModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: 24 }}>
+              <p style={{ margin: '0 0 8px 0', fontWeight: 500 }}>{selectedIntakePatient.patient?.name}</p>
+              <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Capture vitals and assign to a doctor to proceed.</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+              <div>
+                <label>Temperature (°C)</label>
+                <input 
+                  type="number" 
+                  step="0.1"
+                  value={vitalsData.temperature || ''} 
+                  onChange={e => setVitalsData({...vitalsData, temperature: parseFloat(e.target.value)})}
+                  placeholder="e.g. 37.2"
+                />
+              </div>
+              <div>
+                <label>Blood Pressure (mmHg)</label>
+                <input 
+                  type="text" 
+                  value={vitalsData.bloodPressure || ''} 
+                  onChange={e => setVitalsData({...vitalsData, bloodPressure: e.target.value})}
+                  placeholder="e.g. 120/80"
+                />
+              </div>
+              <div>
+                <label>Heart Rate (bpm)</label>
+                <input 
+                  type="number" 
+                  value={vitalsData.heartRate || ''} 
+                  onChange={e => setVitalsData({...vitalsData, heartRate: parseInt(e.target.value)})}
+                  placeholder="e.g. 75"
+                />
+              </div>
+              <div>
+                <label>Weight (kg)</label>
+                <input 
+                  type="number" 
+                  step="0.1"
+                  value={vitalsData.weight || ''} 
+                  onChange={e => setVitalsData({...vitalsData, weight: parseFloat(e.target.value)})}
+                  placeholder="e.g. 70.5"
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label>Assign to Doctor</label>
+              <select 
+                value={intakeDoctorId} 
+                onChange={e => setIntakeDoctorId(e.target.value)}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              >
+                <option value="">Select Doctor...</option>
+                {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button 
+                className="btn btn-ghost" 
+                onClick={() => setVitalsModalOpen(false)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleIntakeSubmit}
+                disabled={actionLoading || !intakeDoctorId}
+              >
+                {actionLoading ? 'Saving...' : 'Complete Intake'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardShell>
   );
 }

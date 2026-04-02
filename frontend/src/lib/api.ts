@@ -125,6 +125,21 @@ export interface LabTestResult {
   labTech?: { id: string; name: string };
 }
 
+export interface Vitals {
+  id: string;
+  patientId: string;
+  nurseId: string | null;
+  temperature: number | null;
+  bloodPressure: string | null;
+  heartRate: number | null;
+  weight: number | null;
+  respiratoryRate: number | null;
+  oxygenSaturation: number | null;
+  notes: string | null;
+  createdAt: string;
+  nurse?: { id: string; name: string; role: Role };
+}
+
 // ── API Error ──────────────────────────────
 
 export class ApiError extends Error {
@@ -482,4 +497,20 @@ export async function getPatientLabResults(
   patientId: string,
 ): Promise<LabTestResult[]> {
   return fetchApi<LabTestResult[]>(`/consultation/${patientId}/lab-results`);
+}
+
+export async function recordVitals(
+  patientId: string,
+  vitalsData: Partial<Vitals>,
+): Promise<Vitals> {
+  return fetchApi<Vitals>(`/vitals/${patientId}`, {
+    method: "POST",
+    body: JSON.stringify(vitalsData),
+  });
+}
+
+export async function getPatientVitals(
+  patientId: string,
+): Promise<Vitals[]> {
+  return fetchApi<Vitals[]>(`/vitals/${patientId}`);
 }

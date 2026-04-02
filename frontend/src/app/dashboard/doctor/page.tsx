@@ -17,12 +17,14 @@ import {
   getLabTestTemplates,
   getPatientNotes,
   getPatientLabResults,
+  getPatientVitals,
   type PatientFlow,
   type InventoryItem,
   type Drug,
   type LabTestTemplate,
   type ConsultationNote,
   type LabTestResult,
+  type Vitals,
 } from '@/lib/api';
 import {
   Stethoscope,
@@ -47,6 +49,7 @@ export default function DoctorDashboard() {
   const [selectedPatient, setSelectedPatient] = useState<PatientFlow | null>(null);
   const [patientNotes, setPatientNotes] = useState<ConsultationNote[]>([]);
   const [patientLabResults, setPatientLabResults] = useState<LabTestResult[]>([]);
+  const [patientVitalsList, setPatientVitalsList] = useState<Vitals[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
   const [activeAction, setActiveAction] = useState<'note' | 'lab' | 'prescription' | null>(null);
@@ -79,12 +82,14 @@ export default function DoctorDashboard() {
 
   const fetchPatientHistory = useCallback(async (patientId: string) => {
     try {
-      const [notes, results] = await Promise.all([
+      const [notes, results, vitalsList] = await Promise.all([
         getPatientNotes(patientId),
         getPatientLabResults(patientId),
+        getPatientVitals(patientId),
       ]);
       setPatientNotes(notes);
       setPatientLabResults(results);
+      setPatientVitalsList(vitalsList);
     } catch (err) {
       console.error('Failed to fetch patient history', err);
     }
@@ -100,6 +105,7 @@ export default function DoctorDashboard() {
     } else {
       setPatientNotes([]);
       setPatientLabResults([]);
+      setPatientVitalsList([]);
     }
   }, [selectedPatient, fetchPatientHistory]);
 
@@ -291,7 +297,17 @@ export default function DoctorDashboard() {
                       ID: {selectedPatient.patientId.slice(0, 8)}…
                     </p>
                   </div>
-                  <StatusBadge status={selectedPatient.currentState} />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                    <StatusBadge status={selectedPatient.currentState} />
+                    {patientVitalsList.length > 0 && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        {patientVitalsList[0].temperature && <span>Temp: {patientVitalsList[0].temperature}°C</span>}
+                        {patientVitalsList[0].bloodPressure && <span>BP: {patientVitalsList[0].bloodPressure}</span>}
+                        {patientVitalsList[0].heartRate && <span>HR: {patientVitalsList[0].heartRate} bpm</span>}
+                        {patientVitalsList[0].weight && <span>Wt: {patientVitalsList[0].weight} kg</span>}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </GlassCard>
 
@@ -342,6 +358,32 @@ export default function DoctorDashboard() {
                     <History size={14} /> Patient History
                   </h4>
                   
+                  <div style={{ marginBottom: 16 }}>
+                    <h5 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase' }}>
+                      Vitals History ({patientVitalsList.length})
+                    </h5>
+                    {patientVitalsList.length === 0 ? (
+                      <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>No vitals recorded</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {patientVitalsList.map((v) => (
+                          <div key={v.id} style={{ padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                              <span style={{ fontWeight: 600, color: 'var(--accent)' }}>By {v.nurse?.name || 'Nurse'}</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{new Date(v.createdAt).toLocaleDateString()} {new Date(v.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', color: 'var(--text-primary)' }}>
+                              {v.temperature && <span><strong>Temp:</strong> {v.temperature}°C</span>}
+                              {v.bloodPressure && <span><strong>BP:</strong> {v.bloodPressure}</span>}
+                              {v.heartRate && <span><strong>HR:</strong> {v.heartRate} bpm</span>}
+                              {v.weight && <span><strong>Wt:</strong> {v.weight} kg</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div style={{ marginBottom: 16 }}>
                     <h5 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase' }}>
                       Consultation Notes ({patientNotes.length})

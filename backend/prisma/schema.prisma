@@ -42,6 +42,8 @@ model User {
   conductedTests       LabTest[]          @relation("LabTechTests")
   patientLabTests      LabTest[]          @relation("PatientLabTests")
   patientPrescriptions Prescription[]     @relation("PatientPrescriptions")
+  patientVitals        Vitals[]           @relation("PatientVitals")
+  nurseVitals          Vitals[]           @relation("NurseVitals")
 }
 
 model PatientFlow {
@@ -117,4 +119,20 @@ model LabTestTemplate {
   isDefault   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Vitals {
+  id               String   @id @default(uuid())
+  patient          User     @relation("PatientVitals", fields: [patientId], references: [id], onDelete: Cascade)
+  patientId        String
+  nurse            User?    @relation("NurseVitals", fields: [nurseId], references: [id])
+  nurseId          String?
+  temperature      Float?
+  bloodPressure    String?
+  heartRate        Int?
+  weight           Float?
+  respiratoryRate  Int?
+  oxygenSaturation Int?
+  notes            String?
+  createdAt        DateTime @default(now())
 }
