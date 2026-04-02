@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
@@ -104,6 +105,41 @@ export class UsersService {
       },
       orderBy: { name: 'asc' },
     });
+  }
+
+  async getStaffHistory(id: string) {
+    const user = await this.prisma.client.user.findUnique({
+      where: { id },
+      include: {
+        doctorConsultations: {
+          include: { patient: { select: { id: true, name: true } } },
+          orderBy: { createdAt: 'desc' },
+        },
+        conductedTests: {
+          include: { patient: { select: { id: true, name: true } } },
+          orderBy: { createdAt: 'desc' },
+        },
+        dispensedPrescriptions: {
+          include: { patient: { select: { id: true, name: true } } },
+          orderBy: { createdAt: 'desc' },
+        },
+        nurseVitals: {
+          include: { patient: { select: { id: true, name: true } } },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Staff member not found');
+    }
+
+    return {
+      consultations: user.doctorConsultations,
+      labTests: user.conductedTests,
+      prescriptions: user.dispensedPrescriptions,
+      vitals: user.nurseVitals,
+    };
   }
 
   private async createPatientAccount(dto: CreatePatientDto) {

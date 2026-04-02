@@ -16,6 +16,12 @@ export class PharmacyController {
     return this.pharmacyService.getWorklist();
   }
 
+  @Get('all')
+  @Roles('PHARMACIST', 'ADMIN')
+  getAllPrescriptions() {
+    return this.pharmacyService.getAllPrescriptions();
+  }
+
   @Post(':rxId/dispense')
   @Roles('PHARMACIST', 'ADMIN')
   dispense(

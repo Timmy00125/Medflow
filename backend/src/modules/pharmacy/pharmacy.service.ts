@@ -16,6 +16,16 @@ export class PharmacyService {
     });
   }
 
+  async getAllPrescriptions() {
+    return this.prisma.client.prescription.findMany({
+      include: { 
+        patient: { select: { id: true, name: true } },
+        pharmacist: { select: { id: true, name: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async dispense(prescriptionId: string, pharmacistId: string) {
     const updatedRx = await this.prisma.client.$transaction(async (tx) => {
       const rx = await tx.prescription.findUnique({

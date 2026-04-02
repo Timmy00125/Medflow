@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateStaffDto } from './dto/create-staff.dto';
 import { CreatePatientDto } from './dto/create-patient.dto';
@@ -33,5 +33,11 @@ export class UsersController {
   @Roles('ADMIN', 'NURSE')
   getDoctors() {
     return this.usersService.findDoctors();
+  }
+
+  @Get('staff/:id/history')
+  @Roles('ADMIN', 'DOCTOR', 'NURSE', 'LAB_TECH', 'PHARMACIST')
+  getStaffHistory(@Param('id') id: string) {
+    return this.usersService.getStaffHistory(id);
   }
 }

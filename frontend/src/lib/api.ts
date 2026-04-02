@@ -140,6 +140,13 @@ export interface Vitals {
   nurse?: { id: string; name: string; role: Role };
 }
 
+export interface StaffHistory {
+  consultations: ConsultationNote[];
+  labTests: LabTest[];
+  prescriptions: Prescription[];
+  vitals: Vitals[];
+}
+
 // ── API Error ──────────────────────────────
 
 export class ApiError extends Error {
@@ -252,6 +259,10 @@ export async function signupPatient(data: {
 
 export async function getStaff(): Promise<StaffMember[]> {
   return fetchApi<StaffMember[]>("/users/staff");
+}
+
+export async function getStaffHistory(id: string): Promise<StaffHistory> {
+  return fetchApi<StaffHistory>(`/users/staff/${id}/history`);
 }
 
 export async function getDoctors(): Promise<StaffMember[]> {
@@ -397,6 +408,10 @@ export async function getLabWorklist(): Promise<LabTest[]> {
   return fetchApi<LabTest[]>("/laboratory/worklist");
 }
 
+export async function getAllLabTests(): Promise<LabTest[]> {
+  return fetchApi<LabTest[]>("/laboratory/all");
+}
+
 export async function uploadLabResult(
   testId: string,
   resultData: string,
@@ -413,6 +428,10 @@ export async function uploadLabResult(
 
 export async function getPharmacyWorklist(): Promise<Prescription[]> {
   return fetchApi<Prescription[]>("/pharmacy/worklist");
+}
+
+export async function getAllPrescriptions(): Promise<Prescription[]> {
+  return fetchApi<Prescription[]>("/pharmacy/all");
 }
 
 export async function dispensePrescription(

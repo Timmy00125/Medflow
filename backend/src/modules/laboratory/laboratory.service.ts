@@ -16,6 +16,16 @@ export class LaboratoryService {
     });
   }
 
+  async getAllTests() {
+    return this.prisma.client.labTest.findMany({
+      include: { 
+        patient: { select: { id: true, name: true } },
+        labTech: { select: { id: true, name: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async uploadResult(testId: string, labTechId: string, resultData: string) {
     const updatedTest = await this.prisma.client.$transaction(async (tx) => {
       const test = await tx.labTest.findUnique({ where: { id: testId } });

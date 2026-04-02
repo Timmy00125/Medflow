@@ -27,34 +27,64 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: 'Admin',
+    label: 'Admin Overview',
     href: '/dashboard/admin',
     icon: <LayoutDashboard size={20} />,
     roles: ['ADMIN'],
   },
   {
-    label: 'Nurse',
+    label: 'Doctors',
+    href: '/dashboard/admin/doctors',
+    icon: <Stethoscope size={20} />,
+    roles: ['ADMIN'],
+  },
+  {
+    label: 'Nurses',
+    href: '/dashboard/admin/nurses',
+    icon: <Users size={20} />,
+    roles: ['ADMIN'],
+  },
+  {
+    label: 'All Lab Tests',
+    href: '/dashboard/admin/laboratory',
+    icon: <FlaskConical size={20} />,
+    roles: ['ADMIN'],
+  },
+  {
+    label: 'All Prescriptions',
+    href: '/dashboard/admin/pharmacy',
+    icon: <Pill size={20} />,
+    roles: ['ADMIN'],
+  },
+  {
+    label: 'Nurse Desk',
     href: '/dashboard/nurse',
     icon: <LayoutDashboard size={20} />,
     roles: ['NURSE'],
   },
   {
-    label: 'Doctor',
+    label: 'Doctor Desk',
     href: '/dashboard/doctor',
     icon: <Stethoscope size={20} />,
-    roles: ['ADMIN', 'DOCTOR'],
+    roles: ['DOCTOR'],
   },
   {
     label: 'Laboratory',
     href: '/dashboard/laboratory',
     icon: <FlaskConical size={20} />,
-    roles: ['ADMIN', 'LAB_TECH'],
+    roles: ['LAB_TECH'],
   },
   {
     label: 'Pharmacy',
     href: '/dashboard/pharmacy',
     icon: <Pill size={20} />,
-    roles: ['ADMIN', 'PHARMACIST'],
+    roles: ['PHARMACIST'],
+  },
+  {
+    label: 'My History',
+    href: '/dashboard/history',
+    icon: <Activity size={20} />,
+    roles: ['DOCTOR', 'NURSE', 'LAB_TECH', 'PHARMACIST', 'ADMIN'],
   },
   {
     label: 'My Status',

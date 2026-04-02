@@ -16,6 +16,12 @@ export class LaboratoryController {
     return this.labService.getWorklist();
   }
 
+  @Get('all')
+  @Roles('ADMIN', 'LAB_TECH')
+  getAllTests() {
+    return this.labService.getAllTests();
+  }
+
   @Post(':testId/result')
   uploadResult(
     @CurrentUser() user: any,
