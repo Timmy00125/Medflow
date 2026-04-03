@@ -5,9 +5,10 @@ import DashboardShell from '@/components/DashboardShell';
 import GlassCard from '@/components/GlassCard';
 import StatCard from '@/components/StatCard';
 import QueueTable, { type QueueColumn } from '@/components/QueueTable';
+import StatusBadge from '@/components/StatusBadge';
 import { useSocket } from '@/hooks/useSocket';
 import { getLabWorklist, uploadLabResult, getLabTestTemplates, createLabTestTemplate, type LabTest, type LabTestTemplate } from '@/lib/api';
-import { FlaskConical, Upload, CheckCircle, RefreshCw, X, FileText, Plus } from 'lucide-react';
+import { FlaskConical, Upload, CheckCircle, RefreshCw, X, Plus, Beaker } from 'lucide-react';
 
 export default function LaboratoryDashboard() {
   const { lastUpdate } = useSocket();
@@ -79,8 +80,6 @@ export default function LaboratoryDashboard() {
     }
   };
 
-  const customTests = labTests.filter(t => !t.isDefault);
-
   const columns: QueueColumn[] = [
     { key: 'patient.name', label: 'Patient' },
     { key: 'testName', label: 'Test' },
@@ -97,128 +96,94 @@ export default function LaboratoryDashboard() {
 
   return (
     <DashboardShell
-      title="Laboratory Dashboard"
+      title="Laboratory"
       subtitle={`${worklist.length} pending tests`}
       headerActions={
-        <button onClick={fetchWorklist} className="btn btn-ghost btn-sm">
-          <RefreshCw size={14} />
+        <button onClick={fetchWorklist} className="btn btn-sm">
+          <RefreshCw size={12} /> Refresh
         </button>
       }
     >
-      {/* Feedback */}
       {successMsg && (
-        <div
-          className="animate-fade-in-down"
-          style={{
-            padding: '12px 16px',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--success-bg)',
-            color: 'var(--success)',
-            fontSize: '0.8125rem',
-            marginBottom: '20px',
-            border: '1px solid rgba(52, 211, 153, 0.2)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <CheckCircle size={16} /> {successMsg}
-          </span>
-          <button className="btn-ghost btn-icon" onClick={() => setSuccessMsg('')}>
+        <div className="alert alert-success" style={{ marginBottom: '16px' }}>
+          <span><CheckCircle size={14} style={{ marginRight: '8px' }} />{successMsg}</span>
+          <button onClick={() => setSuccessMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
             <X size={14} />
           </button>
         </div>
       )}
       {errorMsg && (
-        <div
-          className="animate-fade-in-down"
-          style={{
-            padding: '12px 16px',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--error-bg)',
-            color: 'var(--error)',
-            fontSize: '0.8125rem',
-            marginBottom: '20px',
-            border: '1px solid rgba(248, 113, 113, 0.2)',
-          }}
-        >
-          {errorMsg}
+        <div className="alert alert-error" style={{ marginBottom: '16px' }}>
+          <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Stats */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px',
-        }}
-      >
-        <StatCard
-          icon={<FlaskConical size={20} />}
-          label="Pending Tests"
-          value={worklist.length}
-          subtitle="Awaiting results"
-          accentColor="var(--status-lab)"
-          delay={0}
-        />
-        <StatCard
-          icon={<FileText size={20} />}
-          label="Selected Test"
-          value={selectedTest ? selectedTest.testName : '—'}
-          subtitle={selectedTest ? `Patient: ${selectedTest.patient?.name}` : 'Select a test'}
-          accentColor="var(--accent)"
-          delay={50}
-        />
-        <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <div style={{ color: 'var(--status-lab)' }}><FlaskConical size={20} /></div>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Test Templates</span>
-          </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 8px' }}>{labTests.length} available</p>
-          <button className="btn btn-secondary btn-sm" onClick={() => setShowTestForm(!showTestForm)}>
-            <Plus size={14} /> Add Custom Test
-          </button>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1px', background: 'var(--border)', marginBottom: '16px' }}>
+        <div style={{ background: 'var(--bg)' }}>
+          <StatCard
+            icon={<FlaskConical size={20} />}
+            label="Pending Tests"
+            value={worklist.length}
+            subtitle="Awaiting results"
+          />
+        </div>
+        <div style={{ background: 'var(--bg)' }}>
+          <StatCard
+            icon={<Beaker size={20} />}
+            label="Selected"
+            value={selectedTest ? selectedTest.testName : '—'}
+            subtitle={selectedTest ? `Patient: ${selectedTest.patient?.name}` : 'Select a test'}
+          />
+        </div>
+        <div style={{ background: 'var(--bg)' }}>
+          <GlassCard padding="md" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>
+                Test Templates
+              </span>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '2rem', fontWeight: 700, margin: '8px 0 4px' }}>
+                {labTests.length}
+              </p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Available
+              </p>
+            </div>
+            <button className="btn btn-sm" onClick={() => setShowTestForm(!showTestForm)} style={{ marginTop: '12px' }}>
+              <Plus size={12} /> Add Test
+            </button>
+          </GlassCard>
         </div>
       </div>
 
       {showTestForm && (
-        <GlassCard className="animate-fade-in-down" padding="md" delay={0} style={{ marginBottom: 20 }}>
-          <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0 0 12px', color: 'var(--text-primary)' }}>
+        <GlassCard padding="md" style={{ marginBottom: '16px' }}>
+          <h4 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>
             Add Custom Lab Test
           </h4>
-          <form onSubmit={handleAddTest} style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1 }}>
-              <label htmlFor="test-name">Test Name</label>
-              <input id="test-name" type="text" value={newTestName} onChange={e => setNewTestName(e.target.value)} placeholder="e.g., Dengue Test" required />
+          <form onSubmit={handleAddTest} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '150px' }}>
+              <label>Test Name</label>
+              <input type="text" value={newTestName} onChange={e => setNewTestName(e.target.value)} placeholder="e.g., Dengue Test" required />
             </div>
-            <div style={{ flex: 1 }}>
-              <label htmlFor="test-cat">Category (optional)</label>
-              <input id="test-cat" type="text" value={newTestCategory} onChange={e => setNewTestCategory(e.target.value)} placeholder="e.g., Virology" />
+            <div style={{ flex: 1, minWidth: '150px' }}>
+              <label>Category</label>
+              <input type="text" value={newTestCategory} onChange={e => setNewTestCategory(e.target.value)} placeholder="e.g., Virology" />
             </div>
-            <div style={{ flex: 1 }}>
-              <label htmlFor="test-desc">Description (optional)</label>
-              <input id="test-desc" type="text" value={newTestDesc} onChange={e => setNewTestDesc(e.target.value)} placeholder="Brief description" />
+            <div style={{ flex: 2, minWidth: '200px' }}>
+              <label>Description</label>
+              <input type="text" value={newTestDesc} onChange={e => setNewTestDesc(e.target.value)} placeholder="Brief description" />
             </div>
-            <button type="submit" className="btn btn-primary btn-sm" disabled={testSubmitting} style={{ height: 38 }}>
-              {testSubmitting ? <div className="spinner" /> : <><Plus size={14} /> Add</>}
+            <button type="submit" className="btn btn-primary btn-sm" disabled={testSubmitting}>
+              {testSubmitting ? <div className="spinner" /> : <><Plus size={12} /> Add</>}
             </button>
           </form>
         </GlassCard>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '20px' }}>
-        {/* Worklist table */}
-        <GlassCard padding="none" delay={100}>
-          <div
-            style={{
-              padding: '16px 20px',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
-            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '1px', background: 'var(--border)' }}>
+        <GlassCard padding="none" style={{ background: 'var(--bg)' }}>
+          <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-muted)' }}>
+            <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
               Test Worklist
             </h3>
           </div>
@@ -237,21 +202,18 @@ export default function LaboratoryDashboard() {
           />
         </GlassCard>
 
-        {/* Result upload panel */}
         <div>
           {selectedTest ? (
-            <GlassCard glow padding="md" className="animate-fade-in-up" delay={0}>
-              <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, margin: '0 0 4px', color: 'var(--text-primary)' }}>
+            <GlassCard padding="md" style={{ background: 'var(--bg)' }}>
+              <h4 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px' }}>
                 Upload Result
               </h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 16px' }}>
-                Test: <strong style={{ color: 'var(--accent)' }}>{selectedTest.testName}</strong>
-                {' · '}Patient: {selectedTest.patient?.name}
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', color: 'var(--text-muted)', margin: '0 0 16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {selectedTest.testName} · {selectedTest.patient?.name}
               </p>
 
-              <label htmlFor="result-data">Result Data</label>
+              <label>Result Data</label>
               <textarea
-                id="result-data"
                 value={resultData}
                 onChange={(e) => setResultData(e.target.value)}
                 placeholder="Enter test results, values, observations…"
@@ -259,11 +221,8 @@ export default function LaboratoryDashboard() {
                 style={{ resize: 'vertical' as const }}
               />
 
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setSelectedTest(null)}
-                >
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <button className="btn btn-sm" onClick={() => setSelectedTest(null)}>
                   Cancel
                 </button>
                 <button
@@ -271,35 +230,16 @@ export default function LaboratoryDashboard() {
                   onClick={handleUploadResult}
                   disabled={submitting || !resultData.trim()}
                 >
-                  {submitting ? (
-                    <div className="spinner" />
-                  ) : (
-                    <>
-                      <Upload size={14} /> Upload Result
-                    </>
-                  )}
+                  {submitting ? <div className="spinner" /> : <><Upload size={12} /> Upload</>}
                 </button>
               </div>
             </GlassCard>
           ) : (
-            <GlassCard padding="lg" delay={100}>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column' as const,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '40px 0',
-                  color: 'var(--text-muted)',
-                  gap: '12px',
-                }}
-              >
-                <FlaskConical size={40} strokeWidth={1} />
-                <p style={{ fontSize: '0.9375rem', fontWeight: 500, margin: 0 }}>
+            <GlassCard padding="md" style={{ background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                <FlaskConical size={32} style={{ opacity: 0.5, marginBottom: '12px' }} />
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                   Select a test to upload results
-                </p>
-                <p style={{ fontSize: '0.8125rem', margin: 0 }}>
-                  Click on a pending test from the worklist
                 </p>
               </div>
             </GlassCard>
@@ -309,7 +249,7 @@ export default function LaboratoryDashboard() {
 
       <style>{`
         @media (max-width: 900px) {
-          div[style*="grid-template-columns: 1fr 400px"] {
+          div[style*="grid-template-columns: 1fr 360px"] {
             grid-template-columns: 1fr !important;
           }
         }

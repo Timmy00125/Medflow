@@ -5,6 +5,7 @@ import DashboardShell from '@/components/DashboardShell';
 import GlassCard from '@/components/GlassCard';
 import QueueTable, { type QueueColumn } from '@/components/QueueTable';
 import StatusBadge from '@/components/StatusBadge';
+import StatCard from '@/components/StatCard';
 import { useSocket } from '@/hooks/useSocket';
 import {
   getDoctorQueue,
@@ -34,9 +35,9 @@ import {
   Send,
   X,
   RefreshCw,
-  ChevronRight,
   History,
   CheckCircle,
+  User,
 } from 'lucide-react';
 
 export default function DoctorDashboard() {
@@ -109,7 +110,6 @@ export default function DoctorDashboard() {
     }
   }, [selectedPatient, fetchPatientHistory]);
 
-  // Keep selected patient updated
   useEffect(() => {
     if (selectedPatient) {
       const updated = queue.find((q) => q.patientId === selectedPatient.patientId);
@@ -206,64 +206,32 @@ export default function DoctorDashboard() {
 
   return (
     <DashboardShell
-      title="Doctor Dashboard"
+      title="Doctor Desk"
       subtitle={`${queue.length} patients in your queue`}
       headerActions={
-        <button onClick={fetchData} className="btn btn-ghost btn-sm">
-          <RefreshCw size={14} />
+        <button onClick={fetchData} className="btn btn-sm">
+          <RefreshCw size={12} /> Refresh
         </button>
       }
     >
-      {/* Feedback messages */}
       {actionSuccess && (
-        <div
-          className="animate-fade-in-down"
-          style={{
-            padding: '12px 16px',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--success-bg)',
-            color: 'var(--success)',
-            fontSize: '0.8125rem',
-            marginBottom: '20px',
-            border: '1px solid rgba(52, 211, 153, 0.2)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          {actionSuccess}
-          <button className="btn-ghost btn-icon" onClick={() => setActionSuccess('')}>
+        <div className="alert alert-success" style={{ marginBottom: '16px' }}>
+          <span>{actionSuccess}</span>
+          <button onClick={() => setActionSuccess('')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
             <X size={14} />
           </button>
         </div>
       )}
       {actionError && (
-        <div
-          className="animate-fade-in-down"
-          style={{
-            padding: '12px 16px',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--error-bg)',
-            color: 'var(--error)',
-            fontSize: '0.8125rem',
-            marginBottom: '20px',
-            border: '1px solid rgba(248, 113, 113, 0.2)',
-          }}
-        >
-          {actionError}
+        <div className="alert alert-error" style={{ marginBottom: '16px' }}>
+          <span>{actionError}</span>
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '20px' }}>
-        {/* Left: Patient Queue */}
-        <GlassCard padding="none" delay={0}>
-          <div
-            style={{
-              padding: '16px 20px',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
-            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1px', background: 'var(--border)', marginBottom: '16px' }}>
+        <GlassCard padding="none" style={{ background: 'var(--bg)' }}>
+          <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-muted)' }}>
+            <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
               Patient Queue
             </h3>
           </div>
@@ -282,97 +250,87 @@ export default function DoctorDashboard() {
           />
         </GlassCard>
 
-        {/* Right: Selected Patient Panel */}
-        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--border)' }}>
           {selectedPatient ? (
             <>
-              {/* Patient info header */}
-              <GlassCard padding="md" glow delay={50}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <GlassCard padding="none" style={{ background: 'var(--bg)' }}>
+                <div style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <h2 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                    <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 700, margin: 0 }}>
                       {selectedPatient.patient?.name}
                     </h2>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', color: 'var(--text-muted)', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       ID: {selectedPatient.patientId.slice(0, 8)}…
                     </p>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                    <StatusBadge status={selectedPatient.currentState} />
-                    {patientVitalsList.length > 0 && (
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                        {patientVitalsList[0].temperature && <span>Temp: {patientVitalsList[0].temperature}°C</span>}
-                        {patientVitalsList[0].bloodPressure && <span>BP: {patientVitalsList[0].bloodPressure}</span>}
-                        {patientVitalsList[0].heartRate && <span>HR: {patientVitalsList[0].heartRate} bpm</span>}
-                        {patientVitalsList[0].weight && <span>Wt: {patientVitalsList[0].weight} kg</span>}
-                      </div>
-                    )}
-                  </div>
+                  <StatusBadge status={selectedPatient.currentState} />
                 </div>
+                {patientVitalsList.length > 0 && (
+                  <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-muted)', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                    {patientVitalsList[0].temperature && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem' }}>Temp: <strong>{patientVitalsList[0].temperature}°C</strong></span>}
+                    {patientVitalsList[0].bloodPressure && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem' }}>BP: <strong>{patientVitalsList[0].bloodPressure}</strong></span>}
+                    {patientVitalsList[0].heartRate && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem' }}>HR: <strong>{patientVitalsList[0].heartRate}</strong></span>}
+                    {patientVitalsList[0].weight && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem' }}>Wt: <strong>{patientVitalsList[0].weight} kg</strong></span>}
+                  </div>
+                )}
               </GlassCard>
 
-              {/* Action buttons */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
+              <div style={{ background: 'var(--bg)', padding: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button
-                  className={`btn ${activeAction === 'note' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                  className={`btn ${activeAction === 'note' ? 'btn-primary' : ''}`}
                   onClick={() => setActiveAction(activeAction === 'note' ? null : 'note')}
                 >
-                  <FileText size={14} />
-                  Write Note
+                  <FileText size={12} /> Note
                 </button>
                 <button
-                  className={`btn ${activeAction === 'lab' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                  className={`btn ${activeAction === 'lab' ? 'btn-primary' : ''}`}
                   onClick={() => setActiveAction(activeAction === 'lab' ? null : 'lab')}
                 >
-                  <FlaskConical size={14} />
-                  Order Lab
+                  <FlaskConical size={12} /> Lab
                 </button>
                 <button
-                  className={`btn ${activeAction === 'prescription' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                  className={`btn ${activeAction === 'prescription' ? 'btn-primary' : ''}`}
                   onClick={() => setActiveAction(activeAction === 'prescription' ? null : 'prescription')}
                 >
-                  <Pill size={14} />
-                  Prescribe
+                  <Pill size={12} /> Rx
                 </button>
                 <button
-                  className="btn btn-secondary btn-sm"
+                  className="btn"
                   onClick={() => setShowHistory(!showHistory)}
-                  style={{ marginLeft: 'auto' }}
                 >
-                  <History size={14} />
-                  {showHistory ? 'Hide' : 'Show'} History
+                  <History size={12} /> {showHistory ? 'Hide' : 'History'}
                 </button>
                 <button
-                  className="btn btn-danger btn-sm"
+                  className="btn btn-danger"
                   onClick={handleDischarge}
                   disabled={actionLoading}
+                  style={{ marginLeft: 'auto' }}
                 >
                   Discharge
                 </button>
               </div>
 
-              {/* Patient History Panel */}
               {showHistory && (
-                <GlassCard className="animate-fade-in-up" padding="md" delay={0}>
-                  <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0 0 12px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <History size={14} /> Patient History
+                <GlassCard padding="md" style={{ background: 'var(--bg)' }}>
+                  <h4 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>
+                    Patient History
                   </h4>
                   
                   <div style={{ marginBottom: 16 }}>
-                    <h5 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase' }}>
-                      Vitals History ({patientVitalsList.length})
+                    <h5 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', fontWeight: 700, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Vitals ({patientVitalsList.length})
                     </h5>
                     {patientVitalsList.length === 0 ? (
                       <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>No vitals recorded</p>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {patientVitalsList.map((v) => (
-                          <div key={v.id} style={{ padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem' }}>
+                          <div key={v.id} style={{ padding: '10px 12px', border: '1px solid var(--border)', fontSize: '0.8125rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                              <span style={{ fontWeight: 600, color: 'var(--accent)' }}>By {v.nurse?.name || 'Nurse'}</span>
-                              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{new Date(v.createdAt).toLocaleDateString()} {new Date(v.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                              <span style={{ fontWeight: 700 }}>By {v.nurse?.name || 'Nurse'}</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{new Date(v.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', color: 'var(--text-primary)' }}>
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                               {v.temperature && <span><strong>Temp:</strong> {v.temperature}°C</span>}
                               {v.bloodPressure && <span><strong>BP:</strong> {v.bloodPressure}</span>}
                               {v.heartRate && <span><strong>HR:</strong> {v.heartRate} bpm</span>}
@@ -385,20 +343,20 @@ export default function DoctorDashboard() {
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
-                    <h5 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase' }}>
-                      Consultation Notes ({patientNotes.length})
+                    <h5 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', fontWeight: 700, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Notes ({patientNotes.length})
                     </h5>
                     {patientNotes.length === 0 ? (
                       <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>No consultation notes</p>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {patientNotes.map((note) => (
-                          <div key={note.id} style={{ padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem' }}>
+                          <div key={note.id} style={{ padding: '10px 12px', border: '1px solid var(--border)', fontSize: '0.8125rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                              <span style={{ fontWeight: 600, color: 'var(--accent)' }}>Dr. {note.doctor?.name || 'Unknown'}</span>
+                              <span style={{ fontWeight: 700 }}>Dr. {note.doctor?.name || 'Unknown'}</span>
                               <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{new Date(note.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <p style={{ margin: 0, color: 'var(--text-primary)' }}>{note.notes}</p>
+                            <p style={{ margin: 0 }}>{note.notes}</p>
                           </div>
                         ))}
                       </div>
@@ -406,7 +364,7 @@ export default function DoctorDashboard() {
                   </div>
 
                   <div>
-                    <h5 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase' }}>
+                    <h5 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', fontWeight: 700, color: 'var(--text-muted)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Lab Results ({patientLabResults.length})
                     </h5>
                     {patientLabResults.length === 0 ? (
@@ -414,16 +372,15 @@ export default function DoctorDashboard() {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {patientLabResults.map((result) => (
-                          <div key={result.id} style={{ padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem' }}>
+                          <div key={result.id} style={{ padding: '10px 12px', border: '1px solid var(--border)', fontSize: '0.8125rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                              <span style={{ fontWeight: 600, color: 'var(--status-lab)' }}>{result.testName}</span>
-                              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: result.status === 'COMPLETED' ? 'var(--success)' : 'var(--text-muted)' }}>
-                                {result.status === 'COMPLETED' && <CheckCircle size={12} />}
+                              <span style={{ fontWeight: 700 }}>{result.testName}</span>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', fontWeight: 700, textTransform: 'uppercase' }}>
                                 {result.status}
                               </span>
                             </div>
                             {result.resultData && (
-                              <p style={{ margin: 0, color: 'var(--text-primary)', padding: '6px 8px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+                              <p style={{ margin: 0, padding: '6px 8px', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', background: 'var(--bg-muted)' }}>
                                 {result.resultData}
                               </p>
                             )}
@@ -438,16 +395,15 @@ export default function DoctorDashboard() {
                 </GlassCard>
               )}
 
-              {/* Action panels */}
               {activeAction === 'note' && (
-                <GlassCard className="animate-fade-in-up" padding="md" delay={0}>
-                  <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0 0 12px', color: 'var(--text-primary)' }}>
+                <GlassCard padding="md" style={{ background: 'var(--bg)' }}>
+                  <h4 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>
                     Consultation Note
                   </h4>
                   <textarea
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Enter clinical notes for this patient…"
+                    placeholder="Enter clinical notes..."
                     rows={5}
                     style={{ resize: 'vertical' as const }}
                   />
@@ -457,25 +413,20 @@ export default function DoctorDashboard() {
                       onClick={handleCreateNote}
                       disabled={actionLoading || !noteText.trim()}
                     >
-                      {actionLoading ? <div className="spinner" /> : <><Send size={14} /> Save Note</>}
+                      {actionLoading ? <div className="spinner" /> : <><Send size={12} /> Save</>}
                     </button>
                   </div>
                 </GlassCard>
               )}
 
               {activeAction === 'lab' && (
-                <GlassCard className="animate-fade-in-up" padding="md" delay={0}>
-                  <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0 0 12px', color: 'var(--text-primary)' }}>
+                <GlassCard padding="md" style={{ background: 'var(--bg)' }}>
+                  <h4 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>
                     Order Lab Test
                   </h4>
                   <div>
-                    <label htmlFor="lab-test-name">Test Name</label>
-                    <select
-                      id="lab-test-name"
-                      value={labTestName}
-                      onChange={(e) => setLabTestName(e.target.value)}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-                    >
+                    <label>Test Name</label>
+                    <select value={labTestName} onChange={(e) => setLabTestName(e.target.value)}>
                       <option value="">Select a test...</option>
                       {labTests.map((test) => (
                         <option key={test.id} value={test.name}>
@@ -490,88 +441,58 @@ export default function DoctorDashboard() {
                       onClick={handleOrderLab}
                       disabled={actionLoading || !labTestName.trim()}
                     >
-                      {actionLoading ? <div className="spinner" /> : <><FlaskConical size={14} /> Order Test</>}
+                      {actionLoading ? <div className="spinner" /> : <><FlaskConical size={12} /> Order</>}
                     </button>
                   </div>
                 </GlassCard>
               )}
 
               {activeAction === 'prescription' && (
-                <GlassCard className="animate-fade-in-up" padding="md" delay={0}>
-                  <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0 0 12px', color: 'var(--text-primary)' }}>
+                <GlassCard padding="md" style={{ background: 'var(--bg)' }}>
+                  <h4 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>
                     Prescribe Medication
                   </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                     <div>
-                      <label htmlFor="drug-name">Drug Name</label>
-                      <select
-                        id="drug-name"
-                        value={drugName}
-                        onChange={(e) => setDrugName(e.target.value)}
-                        style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-                      >
+                      <label>Drug</label>
+                      <select value={drugName} onChange={(e) => setDrugName(e.target.value)}>
                         <option value="">Select a drug...</option>
                         {drugs.map((drug) => (
-                          <option key={drug.id} value={drug.name}>
-                            {drug.name}
-                          </option>
+                          <option key={drug.id} value={drug.name}>{drug.name}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="drug-dosage">Dosage</label>
-                      <input
-                        id="drug-dosage"
-                        type="text"
-                        value={dosage}
-                        onChange={(e) => setDosage(e.target.value)}
-                        placeholder="e.g., 500mg 3x daily"
-                      />
+                      <label>Dosage</label>
+                      <input type="text" value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder="e.g., 500mg 3x daily" />
                     </div>
                   </div>
                   {drugName && (
-                    <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
                       {(() => {
-                        const match = inventory.find(
-                          (i) => i.drugName.toLowerCase() === drugName.toLowerCase()
-                        );
-                        return match
-                          ? `Stock available: ${match.stock} units`
-                          : 'Drug not found in inventory';
+                        const match = inventory.find(i => i.drugName.toLowerCase() === drugName.toLowerCase());
+                        return match ? `Stock: ${match.stock} units` : 'Drug not in inventory';
                       })()}
                     </div>
                   )}
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <button
                       className="btn btn-primary btn-sm"
                       onClick={handlePrescribe}
                       disabled={actionLoading || !drugName.trim() || !dosage.trim()}
                     >
-                      {actionLoading ? <div className="spinner" /> : <><Pill size={14} /> Prescribe</>}
+                      {actionLoading ? <div className="spinner" /> : <><Pill size={12} /> Prescribe</>}
                     </button>
                   </div>
                 </GlassCard>
               )}
             </>
           ) : (
-            <GlassCard padding="lg" delay={50}>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column' as const,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '40px 0',
-                  color: 'var(--text-muted)',
-                  gap: '12px',
-                }}
-              >
-                <Stethoscope size={40} strokeWidth={1} />
-                <p style={{ fontSize: '0.9375rem', fontWeight: 500, margin: 0 }}>
+            <GlassCard padding="md" style={{ background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                <User size={32} style={{ opacity: 0.5, marginBottom: '12px' }} />
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                   Select a patient from the queue
-                </p>
-                <p style={{ fontSize: '0.8125rem', margin: 0 }}>
-                  Click on a patient to view details and take actions
                 </p>
               </div>
             </GlassCard>
@@ -581,7 +502,7 @@ export default function DoctorDashboard() {
 
       <style>{`
         @media (max-width: 900px) {
-          div[style*="grid-template-columns: 380px"] {
+          div[style*="grid-template-columns: 320px"] {
             grid-template-columns: 1fr !important;
           }
         }

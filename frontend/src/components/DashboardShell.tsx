@@ -28,26 +28,21 @@ export default function DashboardShell({
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar />
 
-      {/* Main content area — offset by sidebar width */}
       <main
         style={{
           flex: 1,
-          marginLeft: '240px',
+          marginLeft: '220px',
           minHeight: '100vh',
-          position: 'relative' as const,
-          zIndex: 1,
+          background: 'var(--bg)',
         }}
       >
-        {/* Header bar */}
         <header
           style={{
             position: 'sticky' as const,
             top: 0,
             zIndex: 20,
-            padding: '16px 32px',
-            background: 'rgba(6, 10, 20, 0.75)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            padding: '16px 24px',
+            background: 'var(--bg)',
             borderBottom: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
@@ -58,11 +53,13 @@ export default function DashboardShell({
           <div>
             <h1
               style={{
-                fontSize: '1.25rem',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.875rem',
                 fontWeight: 700,
-                color: 'var(--text-primary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: 'var(--text)',
                 margin: 0,
-                lineHeight: 1.3,
               }}
             >
               {title}
@@ -70,9 +67,12 @@ export default function DashboardShell({
             {subtitle && (
               <p
                 style={{
-                  fontSize: '0.8125rem',
-                  color: 'var(--text-secondary)',
-                  margin: '2px 0 0',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.625rem',
+                  color: 'var(--text-muted)',
+                  margin: '4px 0 0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                 }}
               >
                 {subtitle}
@@ -81,38 +81,44 @@ export default function DashboardShell({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* WebSocket status indicator */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontSize: '0.6875rem',
-                color: isConnected ? 'var(--success)' : 'var(--text-muted)',
-                fontWeight: 500,
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.625rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: isConnected ? 'var(--text)' : 'var(--text-muted)',
               }}
               title={isConnected ? 'Real-time connected' : 'WebSocket disconnected'}
             >
-              {isConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
-              <span>{isConnected ? 'Live' : 'Offline'}</span>
+              <span
+                className={`status-dot ${!isConnected ? 'offline' : ''}`}
+              />
+              {isConnected ? 'Live' : 'Offline'}
             </div>
 
             {headerActions}
           </div>
         </header>
 
-        {/* Page content */}
-        <div style={{ padding: '24px 32px', maxWidth: '1400px' }}>
+        <div style={{ padding: '24px' }}>
           {children}
         </div>
       </main>
 
-      {/* Responsive override for mobile */}
       <style>{`
         @media (max-width: 768px) {
-          main { margin-left: 0 !important; }
-          header { padding: 16px !important; padding-left: 52px !important; }
-          main > div:last-child { padding: 16px !important; }
+          main {
+            margin-left: 0 !important;
+          }
+          header {
+            padding: 16px !important;
+            padding-left: 52px !important;
+          }
         }
       `}</style>
     </div>

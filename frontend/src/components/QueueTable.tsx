@@ -30,47 +30,30 @@ export default function QueueTable({
 }: QueueTableProps) {
   if (isLoading) {
     return (
-      <div
-        style={{
-          padding: '48px 24px',
-          display: 'flex',
-          flexDirection: 'column' as const,
-          alignItems: 'center',
-          gap: '12px',
-        }}
-      >
-        <div className="spinner-lg spinner" />
-        <span className="text-secondary" style={{ fontSize: '0.875rem' }}>
-          Loading queue data…
-        </span>
+      <div className="loading-state">
+        <div className="spinner spinner-lg" />
+        <span>Loading queue data...</span>
       </div>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div
-        style={{
-          padding: '48px 24px',
-          textAlign: 'center' as const,
-          color: 'var(--text-muted)',
-          fontSize: '0.875rem',
-        }}
-      >
+      <div className="empty-state">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div style={{ overflowX: 'auto' as const }}>
+    <div style={{ overflowX: 'auto' }}>
       <table className="data-table">
         <thead>
           <tr>
             {columns.map((col) => (
               <th key={col.key}>{col.label}</th>
             ))}
-            {actions && <th style={{ textAlign: 'right' as const }}>Actions</th>}
+            {actions && <th style={{ textAlign: 'right' }}>Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -81,11 +64,9 @@ export default function QueueTable({
               <tr
                 key={id}
                 onClick={() => onRowClick?.(row)}
-                className="animate-fade-in-up"
+                className={isSelected ? 'selected' : ''}
                 style={{
                   cursor: onRowClick ? 'pointer' : 'default',
-                  animationDelay: `${idx * 40}ms`,
-                  background: isSelected ? 'rgba(34, 211, 238, 0.06)' : undefined,
                 }}
               >
                 {columns.map((col) => {
@@ -101,7 +82,7 @@ export default function QueueTable({
                   );
                 })}
                 {actions && (
-                  <td style={{ textAlign: 'right' as const }}>
+                  <td style={{ textAlign: 'right' }}>
                     {actions(row)}
                   </td>
                 )}
@@ -114,7 +95,6 @@ export default function QueueTable({
   );
 }
 
-// Helper: access nested keys like "patient.name"
 function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   return path.split('.').reduce((acc: unknown, part) => {
     if (acc && typeof acc === 'object' && part in (acc as Record<string, unknown>)) {

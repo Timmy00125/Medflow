@@ -7,7 +7,7 @@ import StatCard from "@/components/StatCard";
 import QueueTable, { type QueueColumn } from "@/components/QueueTable";
 import { useRouter } from "next/navigation";
 import { getStaff, type StaffMember } from "@/lib/api";
-import { Stethoscope, Activity, Eye, RefreshCw } from "lucide-react";
+import { Stethoscope, Eye, RefreshCw } from "lucide-react";
 
 export default function AdminDoctorsPage() {
   const [doctors, setDoctors] = useState<StaffMember[]>([]);
@@ -43,33 +43,25 @@ export default function AdminDoctorsPage() {
   return (
     <DashboardShell
       title="Doctors Directory"
-      subtitle="Manage and oversee all doctors"
+      subtitle={`${doctors.length} registered doctors`}
       headerActions={
-        <button className="btn btn-ghost btn-sm" onClick={fetchDoctors}>
-          <RefreshCw size={14} />
+        <button className="btn btn-sm" onClick={fetchDoctors}>
+          <RefreshCw size={12} /> Refresh
         </button>
       }
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-        <StatCard
-          icon={<Stethoscope size={20} />}
-          label="Total Doctors"
-          value={doctors.length}
-          accentColor="var(--status-doctor)"
-          delay={0}
-        />
-        <StatCard
-          icon={<Activity size={20} />}
-          label="Status Active"
-          value={doctors.length > 0 ? "Online" : "Offline"}
-          accentColor="var(--status-triage)"
-          delay={50}
-        />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1px", background: "var(--border)", marginBottom: "16px" }}>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<Stethoscope size={20} />} label="Total Doctors" value={doctors.length} />
+        </div>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<Eye size={20} />} label="Status" value={doctors.length > 0 ? "Active" : "None"} />
+        </div>
       </div>
 
-      <GlassCard padding="none" delay={100} className="animate-slide-up">
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-          <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+      <GlassCard padding="none">
+        <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+          <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
             Registered Doctors
           </h3>
         </div>
@@ -79,12 +71,8 @@ export default function AdminDoctorsPage() {
           isLoading={loading}
           emptyMessage="No doctors found"
           actions={(row) => (
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => router.push(`/dashboard/admin/doctors/${row.id}`)}
-              style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', gap: '6px', alignItems: 'center' }}
-            >
-              <Eye size={14} /> View History
+            <button className="btn btn-sm" onClick={() => router.push(`/dashboard/admin/doctors/${row.id}`)}>
+              <Eye size={12} /> View
             </button>
           )}
         />

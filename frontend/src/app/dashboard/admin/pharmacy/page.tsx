@@ -40,87 +40,61 @@ export default function AdminPharmacyPage() {
     { key: "dosage", label: "Dosage" },
     { key: "status", label: "Status", render: (val) => <StatusBadge status={String(val)} /> },
     { key: "pharmacist.name", label: "Dispensed By", render: (val) => val ? String(val) : "-" },
-    { key: "createdAt", label: "Prescribed At", render: (val) => new Date(String(val)).toLocaleString() }
+    { key: "createdAt", label: "Prescribed", render: (val) => new Date(String(val)).toLocaleString() }
   ];
 
   const invCols: QueueColumn[] = [
     { key: "drugName", label: "Drug Name" },
-    { key: "stock", label: "Stock Level", render: (val) => (
-      <span style={{ color: Number(val) < 10 ? 'var(--error)' : 'inherit' }}>
+    { key: "stock", label: "Stock", render: (val) => (
+      <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: Number(val) < 10 ? 'var(--error)' : 'inherit' }}>
         {String(val)}
       </span>
     )},
-    { key: "updatedAt", label: "Last Updated", render: (val) => new Date(String(val)).toLocaleString() }
+    { key: "updatedAt", label: "Updated", render: (val) => new Date(String(val)).toLocaleString() }
   ];
 
   return (
     <DashboardShell
       title="Pharmacy System"
-      subtitle="Monitor all prescriptions and inventory levels"
+      subtitle={`${prescriptions.length} rx · ${pendingCount} pending`}
       headerActions={
-        <button className="btn btn-ghost btn-sm" onClick={fetchData}>
-          <RefreshCw size={14} />
+        <button className="btn btn-sm" onClick={fetchData}>
+          <RefreshCw size={12} /> Refresh
         </button>
       }
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-        <StatCard
-          icon={<Pill size={20} />}
-          label="Total Prescriptions"
-          value={prescriptions.length}
-          accentColor="var(--status-pharmacy)"
-          delay={0}
-        />
-        <StatCard
-          icon={<CheckCircle size={20} />}
-          label="Dispensed"
-          value={dispensedCount}
-          accentColor="var(--success)"
-          delay={50}
-        />
-        <StatCard
-          icon={<Clock size={20} />}
-          label="Pending"
-          value={pendingCount}
-          accentColor="var(--status-triage)"
-          delay={100}
-        />
-        <StatCard
-          icon={<Package size={20} />}
-          label="Inventory Items"
-          value={inventory.length}
-          accentColor="var(--accent-secondary)"
-          delay={150}
-        />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1px", background: "var(--border)", marginBottom: "16px" }}>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<Pill size={20} />} label="Total Rx" value={prescriptions.length} />
+        </div>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<CheckCircle size={20} />} label="Dispensed" value={dispensedCount} />
+        </div>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<Clock size={20} />} label="Pending" value={pendingCount} />
+        </div>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<Package size={20} />} label="Inventory" value={inventory.length} />
+        </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <GlassCard padding="none" delay={200} className="animate-slide-up">
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-            <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-              Master Prescriptions Ledger
+      <div style={{ display: "flex", flexDirection: "column", gap: "1px", background: "var(--border)" }}>
+        <GlassCard padding="none" style={{ background: "var(--bg)" }}>
+          <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+            <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+              Prescriptions Ledger
             </h3>
           </div>
-          <QueueTable
-            columns={rxCols}
-            data={prescriptions as unknown as Record<string, unknown>[]}
-            isLoading={loading}
-            emptyMessage="No prescriptions recorded yet."
-          />
+          <QueueTable columns={rxCols} data={prescriptions as unknown as Record<string, unknown>[]} isLoading={loading} emptyMessage="No prescriptions" />
         </GlassCard>
 
-        <GlassCard padding="none" delay={250} className="animate-slide-up">
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-            <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+        <GlassCard padding="none" style={{ background: "var(--bg)" }}>
+          <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+            <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
               Medication Inventory
             </h3>
           </div>
-          <QueueTable
-            columns={invCols}
-            data={inventory as unknown as Record<string, unknown>[]}
-            isLoading={loading}
-            emptyMessage="Inventory is empty."
-          />
+          <QueueTable columns={invCols} data={inventory as unknown as Record<string, unknown>[]} isLoading={loading} emptyMessage="No inventory" />
         </GlassCard>
       </div>
     </DashboardShell>

@@ -93,21 +93,16 @@ export default function CheckPatientsPage() {
   const [queueRows, setQueueRows] = useState<PatientQueueRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
-    null,
-  );
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
-  const [consultationNotes, setConsultationNotes] = useState<
-    ConsultationNote[]
-  >([]);
+  const [consultationNotes, setConsultationNotes] = useState<ConsultationNote[]>([]);
   const [labResults, setLabResults] = useState<LabTestResult[]>([]);
   const [vitals, setVitals] = useState<Vitals[]>([]);
 
   const selectedPatient = useMemo(
-    () =>
-      queueRows.find((item) => item.patientId === selectedPatientId) ?? null,
+    () => queueRows.find((item) => item.patientId === selectedPatientId) ?? null,
     [queueRows, selectedPatientId],
   );
 
@@ -139,9 +134,7 @@ export default function CheckPatientsPage() {
             }
             merged.set(patientId, {
               ...existing,
-              sourceQueues: Array.from(
-                new Set([...existing.sourceQueues, ...row.sourceQueues]),
-              ),
+              sourceQueues: Array.from(new Set([...existing.sourceQueues, ...row.sourceQueues])),
             });
           });
         });
@@ -159,9 +152,7 @@ export default function CheckPatientsPage() {
           if (!existing) return;
           merged.set(patientId, {
             ...existing,
-            sourceQueues: Array.from(
-              new Set([...existing.sourceQueues, "History"]),
-            ),
+            sourceQueues: Array.from(new Set([...existing.sourceQueues, "History"])),
           });
         });
       }
@@ -183,9 +174,7 @@ export default function CheckPatientsPage() {
             }
             merged.set(patientId, {
               ...existing,
-              sourceQueues: Array.from(
-                new Set([...existing.sourceQueues, ...row.sourceQueues]),
-              ),
+              sourceQueues: Array.from(new Set([...existing.sourceQueues, ...row.sourceQueues])),
             });
           });
         });
@@ -196,18 +185,14 @@ export default function CheckPatientsPage() {
           if (!existing) return;
           merged.set(patientId, {
             ...existing,
-            sourceQueues: Array.from(
-              new Set([...existing.sourceQueues, "History"]),
-            ),
+            sourceQueues: Array.from(new Set([...existing.sourceQueues, "History"])),
           });
         });
       }
 
       if (user.role === "ADMIN") {
         const staff = await getStaff();
-        const clinicians = staff.filter(
-          (item) => item.role !== "ADMIN" && item.role !== "PATIENT",
-        );
+        const clinicians = staff.filter((item) => item.role !== "ADMIN" && item.role !== "PATIENT");
         const historyResults = await Promise.allSettled(
           clinicians.map((member) => getStaffHistory(member.id)),
         );
@@ -215,27 +200,19 @@ export default function CheckPatientsPage() {
         const historyPatientIds = new Set<string>();
         historyResults.forEach((result) => {
           if (result.status !== "fulfilled") return;
-          getHistoryPatientIds(result.value).forEach((patientId) =>
-            historyPatientIds.add(patientId),
-          );
+          getHistoryPatientIds(result.value).forEach((patientId) => historyPatientIds.add(patientId));
         });
 
         Array.from(historyPatientIds).forEach((patientId) => {
           const existing = merged.get(patientId);
-          if (!existing) {
-            return;
-          }
+          if (!existing) return;
           merged.set(patientId, {
             ...existing,
-            sourceQueues: Array.from(
-              new Set([...existing.sourceQueues, "History"]),
-            ),
+            sourceQueues: Array.from(new Set([...existing.sourceQueues, "History"])),
           });
         });
 
-        const historyOnlyPatientIds = Array.from(historyPatientIds).filter(
-          (patientId) => !merged.has(patientId),
-        );
+        const historyOnlyPatientIds = Array.from(historyPatientIds).filter((patientId) => !merged.has(patientId));
 
         const stateResults = await Promise.allSettled(
           historyOnlyPatientIds.map((patientId) => getPatientState(patientId)),
@@ -243,12 +220,9 @@ export default function CheckPatientsPage() {
 
         stateResults.forEach((result, idx) => {
           if (result.status === "fulfilled") {
-            merged.set(result.value.patientId, {
-              ...toQueueRow(result.value, "History"),
-            });
+            merged.set(result.value.patientId, { ...toQueueRow(result.value, "History") });
             return;
           }
-
           const fallbackPatientId = historyOnlyPatientIds[idx];
           merged.set(fallbackPatientId, {
             patientId: fallbackPatientId,
@@ -260,9 +234,7 @@ export default function CheckPatientsPage() {
       }
 
       const nextRows = Array.from(merged.values()).sort(
-        (a, b) =>
-          new Date(a.queueEnteredAt).getTime() -
-          new Date(b.queueEnteredAt).getTime(),
+        (a, b) => new Date(a.queueEnteredAt).getTime() - new Date(b.queueEnteredAt).getTime(),
       );
 
       setQueueRows(nextRows);
@@ -303,9 +275,7 @@ export default function CheckPatientsPage() {
         setVitals(vitalsData);
       }
     } catch (err: unknown) {
-      setHistoryError(
-        err instanceof Error ? err.message : "Unable to load patient history",
-      );
+      setHistoryError(err instanceof Error ? err.message : "Unable to load patient history");
     } finally {
       setHistoryLoading(false);
     }
@@ -325,11 +295,7 @@ export default function CheckPatientsPage() {
     return queueRows.filter((row) => {
       const patientName = row.patient?.name?.toLowerCase() ?? "";
       const patientEmail = row.patient?.email?.toLowerCase() ?? "";
-      return (
-        patientName.includes(search) ||
-        patientEmail.includes(search) ||
-        row.patientId.includes(search)
-      );
+      return patientName.includes(search) || patientEmail.includes(search) || row.patientId.includes(search);
     });
   }, [query, queueRows]);
 
@@ -345,16 +311,14 @@ export default function CheckPatientsPage() {
     },
     {
       key: "currentState",
-      label: "Current Status",
+      label: "Status",
       render: (value) => <StatusBadge status={String(value)} />,
     },
     {
       key: "queueEnteredAt",
       label: "Waiting",
       render: (value) => {
-        const minutes = Math.floor(
-          (Date.now() - new Date(String(value)).getTime()) / 60000,
-        );
+        const minutes = Math.floor((Date.now() - new Date(String(value)).getTime()) / 60000);
         if (minutes < 1) return "Just now";
         if (minutes < 60) return `${minutes}m`;
         return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
@@ -366,12 +330,9 @@ export default function CheckPatientsPage() {
 
   if (!canOpenPage(user.role)) {
     return (
-      <DashboardShell
-        title="Check Patients"
-        subtitle="This view is available for Admin, Doctor, and Nurse roles"
-      >
-        <GlassCard padding="lg" delay={0}>
-          <p style={{ margin: 0, color: "var(--text-secondary)" }}>
+      <DashboardShell title="Check Patients" subtitle="This view is available for Admin, Doctor, and Nurse roles">
+        <GlassCard padding="md">
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
             Your role cannot access patient checking tools.
           </p>
         </GlassCard>
@@ -382,62 +343,26 @@ export default function CheckPatientsPage() {
   return (
     <DashboardShell
       title="Check Patients"
-      subtitle="Review current and historical patients, then open full patient files"
+      subtitle={`${queueRows.length} active patients`}
       headerActions={
-        <button
-          onClick={fetchQueues}
-          className="btn btn-ghost btn-sm"
-          title="Refresh patient list"
-        >
-          <RefreshCw size={14} />
+        <button onClick={fetchQueues} className="btn btn-sm" title="Refresh">
+          <RefreshCw size={12} /> Refresh
         </button>
       }
     >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "420px 1fr",
-          gap: "20px",
-        }}
-      >
-        <GlassCard padding="none" delay={0}>
-          <div
-            style={{
-              padding: "16px 20px",
-              borderBottom: "1px solid var(--border)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                marginBottom: "12px",
-              }}
-            >
-              <Users size={16} color="var(--accent)" />
-              <h3
-                style={{
-                  fontSize: "0.9375rem",
-                  margin: 0,
-                  color: "var(--text-primary)",
-                }}
-              >
+      <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: "1px", background: "var(--border)" }}>
+        <GlassCard padding="none" style={{ background: "var(--bg)" }}>
+          <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+              <Users size={16} />
+              <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
                 Active Patients
               </h3>
             </div>
             <div style={{ position: "relative" }}>
-              <Search
-                size={14}
-                style={{
-                  position: "absolute",
-                  left: 10,
-                  top: 10,
-                  color: "var(--text-muted)",
-                }}
-              />
+              <Search size={14} style={{ position: "absolute", left: 10, top: 10, color: "var(--text-muted)" }} />
               <input
-                placeholder="Search by patient name or email"
+                placeholder="Search patients..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 style={{ paddingLeft: "32px" }}
@@ -457,186 +382,69 @@ export default function CheckPatientsPage() {
             }}
             actions={(row) => {
               const selected = row as unknown as PatientQueueRow;
-              if (user.role !== "ADMIN") {
-                return null;
-              }
+              if (user.role !== "ADMIN") return null;
               return (
-                <Link
-                  href={`/dashboard/admin/patients/${selected.patientId}`}
-                  className="btn btn-ghost btn-sm"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  Open File
+                <Link href={`/dashboard/admin/patients/${selected.patientId}`} className="btn btn-sm" onClick={(event) => event.stopPropagation()}>
+                  Open
                 </Link>
               );
             }}
           />
         </GlassCard>
 
-        <GlassCard padding="md" delay={80}>
+        <GlassCard padding="none" style={{ background: "var(--bg)" }}>
           {selectedPatient ? (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "14px" }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "10px",
-                }}
-              >
+            <div style={{ padding: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
                 <div>
-                  <h3
-                    style={{
-                      margin: 0,
-                      fontSize: "1.05rem",
-                      color: "var(--text-primary)",
-                    }}
-                  >
+                  <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.875rem", fontWeight: 700, margin: 0 }}>
                     {selectedPatient.patient?.name ?? "Unknown patient"}
                   </h3>
-                  <p
-                    style={{
-                      margin: "4px 0 0",
-                      fontSize: "0.8125rem",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    {selectedPatient.patient?.email ?? "No email available"}
+                  <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.5625rem", color: "var(--text-muted)", margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    {selectedPatient.patient?.email ?? "No email"}
                   </p>
                 </div>
                 <StatusBadge status={selectedPatient.currentState} />
               </div>
 
               {historyLoading ? (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    padding: "30px 0",
-                  }}
-                >
+                <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
                   <div className="spinner spinner-lg" />
                 </div>
               ) : (
                 <>
-                  {historyError ? (
-                    <div
-                      style={{
-                        padding: "12px",
-                        borderRadius: "var(--radius-md)",
-                        background: "var(--error-bg)",
-                        color: "var(--error)",
-                        fontSize: "0.8125rem",
-                      }}
-                    >
-                      {historyError}
+                  {historyError && (
+                    <div className="alert alert-error" style={{ marginBottom: "16px" }}>
+                      <span>{historyError}</span>
                     </div>
-                  ) : null}
+                  )}
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr",
-                      gap: "12px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: "12px",
-                        borderRadius: "var(--radius-md)",
-                        background: "var(--bg-elevated)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <History size={14} color="var(--status-triage)" />
-                        <strong style={{ fontSize: "0.8125rem" }}>
-                          Vitals
-                        </strong>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1px", background: "var(--border)" }}>
+                    <div style={{ padding: "12px", background: "var(--bg)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <History size={14} />
+                        <strong style={{ fontFamily: "var(--font-mono)", fontSize: "0.5625rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Vitals</strong>
                       </div>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: "0.8125rem",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        {vitals.length} records
+                      <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", margin: 0 }}>{vitals.length} records</p>
+                    </div>
+
+                    <div style={{ padding: "12px", background: "var(--bg)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <History size={14} />
+                        <strong style={{ fontFamily: "var(--font-mono)", fontSize: "0.5625rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Notes</strong>
+                      </div>
+                      <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", margin: 0 }}>
+                        {canReadFullHistory(user.role) ? `${consultationNotes.length} notes` : "Restricted"}
                       </p>
                     </div>
 
-                    <div
-                      style={{
-                        padding: "12px",
-                        borderRadius: "var(--radius-md)",
-                        background: "var(--bg-elevated)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <History size={14} color="var(--status-doctor)" />
-                        <strong style={{ fontSize: "0.8125rem" }}>
-                          Consultation Notes
-                        </strong>
+                    <div style={{ padding: "12px", background: "var(--bg)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <History size={14} />
+                        <strong style={{ fontFamily: "var(--font-mono)", fontSize: "0.5625rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Labs</strong>
                       </div>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: "0.8125rem",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        {canReadFullHistory(user.role)
-                          ? `${consultationNotes.length} notes`
-                          : "Available for Doctor and Admin roles"}
-                      </p>
-                    </div>
-
-                    <div
-                      style={{
-                        padding: "12px",
-                        borderRadius: "var(--radius-md)",
-                        background: "var(--bg-elevated)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <History size={14} color="var(--status-lab)" />
-                        <strong style={{ fontSize: "0.8125rem" }}>
-                          Lab Results
-                        </strong>
-                      </div>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: "0.8125rem",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        {canReadFullHistory(user.role)
-                          ? `${labResults.length} results`
-                          : "Available for Doctor and Admin roles"}
+                      <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", margin: 0 }}>
+                        {canReadFullHistory(user.role) ? `${labResults.length} results` : "Restricted"}
                       </p>
                     </div>
                   </div>
@@ -644,8 +452,11 @@ export default function CheckPatientsPage() {
               )}
             </div>
           ) : (
-            <div style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
-              Select a patient to see history.
+            <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+              <Users size={32} style={{ opacity: 0.5, marginBottom: "12px" }} />
+              <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+                Select a patient to see history
+              </p>
             </div>
           )}
         </GlassCard>
@@ -653,7 +464,7 @@ export default function CheckPatientsPage() {
 
       <style>{`
         @media (max-width: 980px) {
-          div[style*='grid-template-columns: 420px 1fr'] {
+          div[style*='grid-template-columns: 380px 1fr'] {
             grid-template-columns: 1fr !important;
           }
         }

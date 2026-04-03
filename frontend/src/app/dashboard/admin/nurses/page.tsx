@@ -5,9 +5,10 @@ import DashboardShell from "@/components/DashboardShell";
 import GlassCard from "@/components/GlassCard";
 import StatCard from "@/components/StatCard";
 import QueueTable, { type QueueColumn } from "@/components/QueueTable";
+import StatusBadge from "@/components/StatusBadge";
 import { useRouter } from "next/navigation";
 import { getStaff, getNurseQueue, advancePatient, type StaffMember, type PatientFlow } from "@/lib/api";
-import { Users, Activity, Eye, RefreshCw, ClipboardList } from "lucide-react";
+import { Users, Eye, RefreshCw, ClipboardList } from "lucide-react";
 
 export default function AdminNursesPage() {
   const [nurses, setNurses] = useState<StaffMember[]>([]);
@@ -70,36 +71,27 @@ export default function AdminNursesPage() {
   return (
     <DashboardShell
       title="Nurses Overview"
-      subtitle="Manage nurses and triage queues"
+      subtitle={`${nurses.length} nurses · ${nurseQueue.length} in queue`}
       headerActions={
-        <button className="btn btn-ghost btn-sm" onClick={fetchData}>
-          <RefreshCw size={14} />
+        <button className="btn btn-sm" onClick={fetchData}>
+          <RefreshCw size={12} /> Refresh
         </button>
       }
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-        <StatCard
-          icon={<Users size={20} />}
-          label="Total Nurses"
-          value={nurses.length}
-          accentColor="var(--accent)"
-          delay={0}
-        />
-        <StatCard
-          icon={<ClipboardList size={20} />}
-          label="Nurse Queue Size"
-          value={nurseQueue.length}
-          subtitle="Awaiting doctor review"
-          accentColor="var(--status-triage)"
-          delay={50}
-        />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1px", background: "var(--border)", marginBottom: "16px" }}>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<Users size={20} />} label="Total Nurses" value={nurses.length} />
+        </div>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<ClipboardList size={20} />} label="Nurse Queue" value={nurseQueue.length} subtitle="Awaiting review" />
+        </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <GlassCard padding="none" delay={100} className="animate-slide-up">
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-            <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-              Nurse Queue (Awaiting Doctor Review)
+      <div style={{ display: "flex", flexDirection: "column", gap: "1px", background: "var(--border)", marginBottom: "16px" }}>
+        <GlassCard padding="none" style={{ background: "var(--bg)" }}>
+          <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+            <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+              Nurse Queue ({nurseQueue.length})
             </h3>
           </div>
           <QueueTable
@@ -108,21 +100,17 @@ export default function AdminNursesPage() {
             isLoading={loading}
             emptyMessage="No patients in nurse queue"
             actions={(row) => (
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => handleDischarge(row.patientId as string)}
-                style={{ padding: '6px 12px', fontSize: '0.75rem', color: "var(--error)" }}
-              >
+              <button className="btn btn-sm btn-danger" onClick={() => handleDischarge(row.patientId as string)}>
                 Discharge
               </button>
             )}
           />
         </GlassCard>
 
-        <GlassCard padding="none" delay={150} className="animate-slide-up">
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-            <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-              Registered Nurses
+        <GlassCard padding="none" style={{ background: "var(--bg)" }}>
+          <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+            <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+              Registered Nurses ({nurses.length})
             </h3>
           </div>
           <QueueTable
@@ -131,12 +119,8 @@ export default function AdminNursesPage() {
             isLoading={loading}
             emptyMessage="No nurses found"
             actions={(row) => (
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => router.push(`/dashboard/admin/nurses/${row.id}`)}
-                style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', gap: '6px', alignItems: 'center' }}
-              >
-                <Eye size={14} /> View Triages
+              <button className="btn btn-sm" onClick={() => router.push(`/dashboard/admin/nurses/${row.id}`)}>
+                <Eye size={12} /> View
               </button>
             )}
           />

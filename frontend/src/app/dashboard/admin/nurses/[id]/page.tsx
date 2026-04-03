@@ -7,7 +7,7 @@ import GlassCard from "@/components/GlassCard";
 import StatCard from "@/components/StatCard";
 import QueueTable, { type QueueColumn } from "@/components/QueueTable";
 import { getStaffHistory, type StaffHistory } from "@/lib/api";
-import { ArrowLeft, Users, Activity, Eye, ClipboardList } from "lucide-react";
+import { ArrowLeft, Users, ClipboardList, Eye } from "lucide-react";
 
 export default function NurseHistoryPage() {
   const { id } = useParams() as { id: string };
@@ -33,7 +33,7 @@ export default function NurseHistoryPage() {
     { key: "patient.name", label: "Patient" },
     { key: "bloodPressure", label: "BP", render: (val) => val ? String(val) : "N/A" },
     { key: "temperature", label: "Temp", render: (val) => val ? `${val}°C` : "N/A" },
-    { key: "notes", label: "Triage Notes", render: (val) => String(val || "").substring(0, 50) + (String(val).length > 50 ? "..." : "") },
+    { key: "notes", label: "Notes", render: (val) => String(val || "").substring(0, 50) + (String(val).length > 50 ? "..." : "") },
     { key: "createdAt", label: "Date", render: (val) => new Date(String(val)).toLocaleString() }
   ];
 
@@ -42,31 +42,23 @@ export default function NurseHistoryPage() {
       title="Nurse Triage History"
       subtitle="Triaged patients and recorded vitals"
       headerActions={
-        <button className="btn btn-ghost" onClick={() => router.push('/dashboard/admin/nurses')} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <ArrowLeft size={16} /> Back to Nurses
+        <button className="btn btn-sm" onClick={() => router.push('/dashboard/admin/nurses')}>
+          <ArrowLeft size={12} /> Back
         </button>
       }
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-        <StatCard
-          icon={<ClipboardList size={20} />}
-          label="Total Triages"
-          value={history ? history.vitals.length : 0}
-          accentColor="var(--status-triage)"
-          delay={0}
-        />
-        <StatCard
-          icon={<Users size={20} />}
-          label="Unique Patients"
-          value={history ? new Set(history.vitals.map(v => v.patientId)).size : 0}
-          accentColor="var(--accent)"
-          delay={50}
-        />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: 'var(--border)', marginBottom: '16px' }}>
+        <div style={{ background: 'var(--bg)' }}>
+          <StatCard icon={<ClipboardList size={20} />} label="Total Triages" value={history ? history.vitals.length : 0} />
+        </div>
+        <div style={{ background: 'var(--bg)' }}>
+          <StatCard icon={<Users size={20} />} label="Unique Patients" value={history ? new Set(history.vitals.map(v => v.patientId)).size : 0} />
+        </div>
       </div>
 
-      <GlassCard padding="none" delay={100} className="animate-slide-up">
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-          <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+      <GlassCard padding="none">
+        <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+          <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
             Recent Vitals Recorded
           </h3>
         </div>
@@ -74,14 +66,10 @@ export default function NurseHistoryPage() {
           columns={cols}
           data={history ? history.vitals as unknown as Record<string, unknown>[] : []}
           isLoading={loading}
-          emptyMessage="No vitals recorded by this nurse"
+          emptyMessage="No vitals recorded"
           actions={(row) => (
-            <button
-               className="btn btn-ghost btn-sm"
-               onClick={() => router.push(`/dashboard/admin/patients/${row.patientId}`)}
-               style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
-            >
-              <Eye size={14} /> View Patient
+            <button className="btn btn-sm" onClick={() => router.push(`/dashboard/admin/patients/${row.patientId}`)}>
+              <Eye size={12} /> View
             </button>
           )}
         />

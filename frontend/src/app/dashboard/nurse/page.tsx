@@ -31,9 +31,6 @@ export default function NurseDashboard() {
   const [triageQueue, setTriageQueue] = useState<PatientFlow[]>([]);
   const [reviewQueue, setReviewQueue] = useState<PatientFlow[]>([]);
   const [doctors, setDoctors] = useState<StaffMember[]>([]);
-  const [doctorSelectionByPatient, setDoctorSelectionByPatient] = useState<
-    Record<string, string>
-  >({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -99,9 +96,7 @@ export default function NurseDashboard() {
     setSuccessMsg("");
     setErrorMsg("");
     try {
-      // First record vitals
       await recordVitals(selectedIntakePatient.patientId, vitalsData);
-      // Then assign doctor (which advances state)
       await assignPatientToDoctor(selectedIntakePatient.patientId, intakeDoctorId);
       
       setSuccessMsg("Patient intake complete. Vitals recorded and assigned to doctor.");
@@ -168,98 +163,85 @@ export default function NurseDashboard() {
 
   return (
     <DashboardShell
-      title="Nurse Dashboard"
-      subtitle={`${triageQueue.length} awaiting triage • ${reviewQueue.length} for review`}
+      title="Nurse Desk"
+      subtitle={`${triageQueue.length} awaiting triage · ${reviewQueue.length} for review`}
       headerActions={
-        <button onClick={fetchQueues} className="btn btn-ghost btn-sm">
-          <RefreshCw size={14} />
+        <button onClick={fetchQueues} className="btn btn-sm">
+          <RefreshCw size={12} />
+          Refresh
         </button>
       }
     >
       {successMsg && (
-        <div
-          className="animate-fade-in-down"
-          style={{
-            padding: "12px 16px",
-            borderRadius: "var(--radius-md)",
-            background: "var(--success-bg)",
-            color: "var(--success)",
-            fontSize: "0.8125rem",
-            marginBottom: "20px",
-            border: "1px solid rgba(52, 211, 153, 0.2)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {successMsg}
+        <div className="alert alert-success" style={{ marginBottom: '16px' }}>
+          <span>{successMsg}</span>
           <button
-            className="btn-ghost btn-icon"
             onClick={() => setSuccessMsg("")}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              color: 'var(--text)',
+            }}
           >
             <X size={14} />
           </button>
         </div>
       )}
       {errorMsg && (
-        <div
-          className="animate-fade-in-down"
-          style={{
-            padding: "12px 16px",
-            borderRadius: "var(--radius-md)",
-            background: "var(--error-bg)",
-            color: "var(--error)",
-            fontSize: "0.8125rem",
-            marginBottom: "20px",
-            border: "1px solid rgba(248, 113, 113, 0.2)",
-          }}
-        >
-          {errorMsg}
+        <div className="alert alert-error" style={{ marginBottom: '16px' }}>
+          <span>{errorMsg}</span>
         </div>
       )}
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "16px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: "1px",
+          background: "var(--border)",
+          border: "1px solid var(--border)",
           marginBottom: "24px",
         }}
       >
-        <StatCard
-          icon={<ClipboardList size={20} />}
-          label="Awaiting Triage"
-          value={triageQueue.length}
-          subtitle="New patients"
-          accentColor="var(--warning)"
-          delay={0}
-        />
-        <StatCard
-          icon={<UserCheck size={20} />}
-          label="Awaiting Discharge"
-          value={reviewQueue.length}
-          subtitle="Post-pharmacy"
-          accentColor="var(--success)"
-          delay={50}
-        />
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard
+            icon={<ClipboardList size={20} />}
+            label="Awaiting Triage"
+            value={triageQueue.length}
+            subtitle="New patients"
+          />
+        </div>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard
+            icon={<UserCheck size={20} />}
+            label="Awaiting Discharge"
+            value={reviewQueue.length}
+            subtitle="Post-pharmacy"
+          />
+        </div>
       </div>
 
       <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px", background: "var(--border)" }}
       >
-        <GlassCard padding="none" delay={100}>
+        <GlassCard padding="none" style={{ background: "var(--bg)" }}>
           <div
             style={{
-              padding: "16px 20px",
+              padding: "16px",
               borderBottom: "1px solid var(--border)",
+              background: "var(--bg-muted)",
             }}
           >
             <h3
               style={{
-                fontSize: "0.9375rem",
-                fontWeight: 600,
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
                 margin: 0,
-                color: "var(--text-primary)",
               }}
             >
               Triage Queue
@@ -273,14 +255,9 @@ export default function NurseDashboard() {
             actions={(row) => {
               const patient = row as unknown as PatientFlow;
               return (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                  }}
-                >
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
                   <button
-                    className="btn btn-primary btn-sm"
+                    className="btn btn-sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedIntakePatient(patient);
@@ -288,7 +265,7 @@ export default function NurseDashboard() {
                     }}
                     disabled={actionLoading || doctors.length === 0}
                   >
-                    Intake Patient
+                    Intake
                   </button>
                 </div>
               );
@@ -296,28 +273,34 @@ export default function NurseDashboard() {
           />
         </GlassCard>
 
-        <GlassCard padding="none" delay={150}>
+        <GlassCard padding="none" style={{ background: "var(--bg)" }}>
           <div
             style={{
-              padding: "16px 20px",
+              padding: "16px",
               borderBottom: "1px solid var(--border)",
+              background: "var(--bg-muted)",
             }}
           >
             <h3
               style={{
-                fontSize: "0.9375rem",
-                fontWeight: 600,
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
                 margin: 0,
-                color: "var(--text-primary)",
               }}
             >
               Awaiting Doctor Review
             </h3>
             <p
               style={{
-                fontSize: "0.75rem",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.5625rem",
                 color: "var(--text-muted)",
                 margin: "4px 0 0",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
               }}
             >
               Post-pharmacy patients ready for discharge
@@ -332,7 +315,7 @@ export default function NurseDashboard() {
               const patient = row as unknown as PatientFlow;
               return (
                 <button
-                  className="btn btn-success btn-sm"
+                  className="btn btn-sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDischarge(patient.patientId);
@@ -347,117 +330,124 @@ export default function NurseDashboard() {
         </GlassCard>
       </div>
 
-      <style>{`
-        @media (max-width: 900px) {
-          div[style*="grid-template-columns: 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-          }
-        }
-        
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0,0,0,0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 100;
-          backdrop-filter: blur(4px);
-        }
-        .modal-content {
-          background: var(--bg-primary);
-          padding: 24px;
-          border-radius: var(--radius-lg);
-          width: 90%;
-          max-width: 500px;
-          max-height: 90vh;
-          overflow-y: auto;
-          border: 1px solid var(--border);
-          box-shadow: var(--shadow-lg);
-        }
-      `}</style>
-      
       {vitalsModalOpen && selectedIntakePatient && (
-        <div className="modal-overlay animate-fade-in" onClick={() => setVitalsModalOpen(false)}>
-          <div className="modal-content animate-fade-in-up" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Patient Intake</h3>
-              <button className="btn-icon" onClick={() => setVitalsModalOpen(false)}>
+        <div className="modal-overlay" onClick={() => setVitalsModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  margin: 0,
+                }}
+              >
+                Patient Intake
+              </h3>
+              <button
+                onClick={() => setVitalsModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                }}
+              >
                 <X size={20} />
               </button>
             </div>
             
-            <div style={{ marginBottom: 24 }}>
-              <p style={{ margin: '0 0 8px 0', fontWeight: 500 }}>{selectedIntakePatient.patient?.name}</p>
-              <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Capture vitals and assign to a doctor to proceed.</p>
+            <div className="modal-body">
+              <div style={{ marginBottom: '20px' }}>
+                <p
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.875rem",
+                    fontWeight: 700,
+                    margin: "0 0 4px 0",
+                  }}
+                >
+                  {selectedIntakePatient.patient?.name}
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.6875rem",
+                    color: "var(--text-muted)",
+                    margin: 0,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Capture vitals and assign to a doctor to proceed.
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                <div>
+                  <label>Temperature (°C)</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    value={vitalsData.temperature || ''} 
+                    onChange={e => setVitalsData({...vitalsData, temperature: parseFloat(e.target.value)})}
+                    placeholder="e.g. 37.2"
+                  />
+                </div>
+                <div>
+                  <label>Blood Pressure</label>
+                  <input 
+                    type="text" 
+                    value={vitalsData.bloodPressure || ''} 
+                    onChange={e => setVitalsData({...vitalsData, bloodPressure: e.target.value})}
+                    placeholder="e.g. 120/80"
+                  />
+                </div>
+                <div>
+                  <label>Heart Rate (bpm)</label>
+                  <input 
+                    type="number" 
+                    value={vitalsData.heartRate || ''} 
+                    onChange={e => setVitalsData({...vitalsData, heartRate: parseInt(e.target.value)})}
+                    placeholder="e.g. 75"
+                  />
+                </div>
+                <div>
+                  <label>Weight (kg)</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    value={vitalsData.weight || ''} 
+                    onChange={e => setVitalsData({...vitalsData, weight: parseFloat(e.target.value)})}
+                    placeholder="e.g. 70.5"
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label>Assign to Doctor</label>
+                <select 
+                  value={intakeDoctorId} 
+                  onChange={e => setIntakeDoctorId(e.target.value)}
+                >
+                  <option value="">Select Doctor...</option>
+                  {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-              <div>
-                <label>Temperature (°C)</label>
-                <input 
-                  type="number" 
-                  step="0.1"
-                  value={vitalsData.temperature || ''} 
-                  onChange={e => setVitalsData({...vitalsData, temperature: parseFloat(e.target.value)})}
-                  placeholder="e.g. 37.2"
-                />
-              </div>
-              <div>
-                <label>Blood Pressure (mmHg)</label>
-                <input 
-                  type="text" 
-                  value={vitalsData.bloodPressure || ''} 
-                  onChange={e => setVitalsData({...vitalsData, bloodPressure: e.target.value})}
-                  placeholder="e.g. 120/80"
-                />
-              </div>
-              <div>
-                <label>Heart Rate (bpm)</label>
-                <input 
-                  type="number" 
-                  value={vitalsData.heartRate || ''} 
-                  onChange={e => setVitalsData({...vitalsData, heartRate: parseInt(e.target.value)})}
-                  placeholder="e.g. 75"
-                />
-              </div>
-              <div>
-                <label>Weight (kg)</label>
-                <input 
-                  type="number" 
-                  step="0.1"
-                  value={vitalsData.weight || ''} 
-                  onChange={e => setVitalsData({...vitalsData, weight: parseFloat(e.target.value)})}
-                  placeholder="e.g. 70.5"
-                />
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 24 }}>
-              <label>Assign to Doctor</label>
-              <select 
-                value={intakeDoctorId} 
-                onChange={e => setIntakeDoctorId(e.target.value)}
-                style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-              >
-                <option value="">Select Doctor...</option>
-                {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+            <div className="modal-footer">
               <button 
-                className="btn btn-ghost" 
+                className="btn"
                 onClick={() => setVitalsModalOpen(false)}
                 disabled={actionLoading}
               >
                 Cancel
               </button>
               <button 
-                className="btn btn-primary" 
+                className="btn btn-primary"
                 onClick={handleIntakeSubmit}
                 disabled={actionLoading || !intakeDoctorId}
               >

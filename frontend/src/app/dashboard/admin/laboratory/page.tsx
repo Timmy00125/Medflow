@@ -7,7 +7,7 @@ import StatCard from "@/components/StatCard";
 import QueueTable, { type QueueColumn } from "@/components/QueueTable";
 import StatusBadge from "@/components/StatusBadge";
 import { getAllLabTests, type LabTest } from "@/lib/api";
-import { FlaskConical, Search, CheckCircle, RefreshCw, Clock } from "lucide-react";
+import { FlaskConical, CheckCircle, RefreshCw, Clock } from "lucide-react";
 
 export default function AdminLaboratoryPage() {
   const [tests, setTests] = useState<LabTest[]>([]);
@@ -34,70 +34,48 @@ export default function AdminLaboratoryPage() {
 
   const cols: QueueColumn[] = [
     { key: "patient.name", label: "Patient" },
-    { key: "testName", label: "Test Requested" },
+    { key: "testName", label: "Test" },
     { key: "status", label: "Status", render: (val) => <StatusBadge status={String(val)} /> },
     { key: "labTech.name", label: "Lab Tech", render: (val) => val ? String(val) : "-" },
-    { key: "createdAt", label: "Ordered At", render: (val) => new Date(String(val)).toLocaleString() }
+    { key: "createdAt", label: "Ordered", render: (val) => new Date(String(val)).toLocaleString() }
   ];
 
   return (
     <DashboardShell
       title="Laboratory System"
-      subtitle="Monitor all ordered tests, statuses, and results"
+      subtitle={`${tests.length} total · ${pendingCount} pending`}
       headerActions={
-        <button className="btn btn-ghost btn-sm" onClick={fetchTests}>
-          <RefreshCw size={14} />
+        <button className="btn btn-sm" onClick={fetchTests}>
+          <RefreshCw size={12} /> Refresh
         </button>
       }
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-        <StatCard
-          icon={<FlaskConical size={20} />}
-          label="Total Orders"
-          value={tests.length}
-          accentColor="var(--status-lab)"
-          delay={0}
-        />
-        <StatCard
-          icon={<CheckCircle size={20} />}
-          label="Completed Tests"
-          value={completedCount}
-          accentColor="var(--success)"
-          delay={50}
-        />
-        <StatCard
-          icon={<Clock size={20} />}
-          label="Pending Tests"
-          value={pendingCount}
-          accentColor="var(--status-triage)"
-          delay={100}
-        />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1px", background: "var(--border)", marginBottom: "16px" }}>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<FlaskConical size={20} />} label="Total Orders" value={tests.length} />
+        </div>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<CheckCircle size={20} />} label="Completed" value={completedCount} />
+        </div>
+        <div style={{ background: "var(--bg)" }}>
+          <StatCard icon={<Clock size={20} />} label="Pending" value={pendingCount} />
+        </div>
       </div>
 
-      <GlassCard padding="none" delay={150} className="animate-slide-up">
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-          <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-            Master Lab Tests Ledger
+      <GlassCard padding="none">
+        <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+          <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+            Lab Tests Ledger
           </h3>
         </div>
         <QueueTable
           columns={cols}
           data={tests as unknown as Record<string, unknown>[]}
           isLoading={loading}
-          emptyMessage="No lab tests ordered yet."
+          emptyMessage="No lab tests ordered yet"
           actions={(row) => (
-            <button
-               className="btn btn-ghost btn-sm"
-               onClick={() => {
-                 if (row.resultData) {
-                   alert(`Result Data: ${row.resultData}`);
-                 } else {
-                   alert("Result not uploaded yet.");
-                 }
-               }}
-               style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
-            >
-              <Search size={14} /> View Result
+            <button className="btn btn-sm" onClick={() => alert(row.resultData ? `Result: ${row.resultData}` : "No result uploaded")}>
+              View
             </button>
           )}
         />

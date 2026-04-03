@@ -7,8 +7,6 @@ interface StatCardProps {
   label: string;
   value: string | number;
   subtitle?: string;
-  accentColor?: string;
-  delay?: number;
 }
 
 export default function StatCard({
@@ -16,70 +14,65 @@ export default function StatCard({
   label,
   value,
   subtitle,
-  accentColor = 'var(--accent)',
-  delay = 0,
 }: StatCardProps) {
   return (
     <div
-      className="glass animate-fade-in-up"
+      className="card"
       style={{
-        padding: '20px 24px',
+        padding: '24px',
         display: 'flex',
-        alignItems: 'flex-start',
+        flexDirection: 'column',
         gap: '16px',
-        animationDelay: `${delay}ms`,
       }}
     >
       <div
         style={{
-          width: '44px',
-          height: '44px',
-          borderRadius: 'var(--radius-md)',
-          background: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          color: accentColor,
-          flexShrink: 0,
+          justifyContent: 'space-between',
         }}
       >
-        {icon}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
+        <span
           style={{
-            fontSize: '0.6875rem',
-            fontWeight: 600,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase' as const,
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.625rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
             color: 'var(--text-muted)',
-            marginBottom: '4px',
           }}
         >
           {label}
-        </div>
+        </span>
+        <span style={{ color: 'var(--text)', opacity: 0.6 }}>{icon}</span>
+      </div>
+
+      <div
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '4rem',
+          fontWeight: 700,
+          lineHeight: 1,
+          color: 'var(--text)',
+          letterSpacing: '-0.02em',
+        }}
+      >
+        {value}
+      </div>
+
+      {subtitle && (
         <div
           style={{
-            fontSize: '1.75rem',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            lineHeight: 1.1,
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.6875rem',
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
           }}
         >
-          {value}
+          {subtitle}
         </div>
-        {subtitle && (
-          <div
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--text-secondary)',
-              marginTop: '4px',
-            }}
-          >
-            {subtitle}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

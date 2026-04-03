@@ -35,7 +35,7 @@ export default function DoctorHistoryPage() {
 
   const cols: QueueColumn[] = [
     { key: "patient.name", label: "Patient" },
-    { key: "notes", label: "Consultation Notes", render: (val) => String(val).substring(0, 60) + "..." },
+    { key: "notes", label: "Notes", render: (val) => String(val).substring(0, 60) + "..." },
     { key: "createdAt", label: "Date", render: (val) => new Date(String(val)).toLocaleString() }
   ];
 
@@ -44,31 +44,23 @@ export default function DoctorHistoryPage() {
       title="Doctor History"
       subtitle="Activity and patient outcomes"
       headerActions={
-        <button className="btn btn-ghost" onClick={() => router.push('/dashboard/admin/doctors')} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <ArrowLeft size={16} /> Back to Doctors
+        <button className="btn btn-sm" onClick={() => router.push('/dashboard/admin/doctors')}>
+          <ArrowLeft size={12} /> Back
         </button>
       }
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-        <StatCard
-          icon={<FileText size={20} />}
-          label="Total Consultations"
-          value={history ? history.consultations.length : 0}
-          accentColor="var(--status-doctor)"
-          delay={0}
-        />
-        <StatCard
-          icon={<Users size={20} />}
-          label="Unique Patients Seen"
-          value={uniquePatients.length}
-          accentColor="var(--accent)"
-          delay={50}
-        />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: 'var(--border)', marginBottom: '16px' }}>
+        <div style={{ background: 'var(--bg)' }}>
+          <StatCard icon={<FileText size={20} />} label="Total Consultations" value={history ? history.consultations.length : 0} />
+        </div>
+        <div style={{ background: 'var(--bg)' }}>
+          <StatCard icon={<Users size={20} />} label="Unique Patients" value={uniquePatients.length} />
+        </div>
       </div>
 
-      <GlassCard padding="none" delay={100} className="animate-slide-up">
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-          <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+      <GlassCard padding="none">
+        <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+          <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
             Recent Consultations
           </h3>
         </div>
@@ -78,12 +70,8 @@ export default function DoctorHistoryPage() {
           isLoading={loading}
           emptyMessage="No consultations found"
           actions={(row) => (
-            <button
-               className="btn btn-ghost btn-sm"
-               onClick={() => router.push(`/dashboard/admin/patients/${row.patientId}`)}
-               style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
-            >
-              <Eye size={14} /> View Patient
+            <button className="btn btn-sm" onClick={() => router.push(`/dashboard/admin/patients/${row.patientId}`)}>
+              <Eye size={12} /> View
             </button>
           )}
         />

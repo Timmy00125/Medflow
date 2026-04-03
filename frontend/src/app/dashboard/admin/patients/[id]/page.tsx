@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
 import GlassCard from "@/components/GlassCard";
+import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
 import QueueTable, { type QueueColumn } from "@/components/QueueTable";
 import {
@@ -19,7 +20,7 @@ import {
   type Vitals,
   type StaffMember
 } from "@/lib/api";
-import { ArrowLeft, User, Activity, FileText, FlaskConical, Stethoscope, HeartPulse } from "lucide-react";
+import { ArrowLeft, User, HeartPulse, Stethoscope, FlaskConical } from "lucide-react";
 
 export default function AdminPatientDetailPage() {
   const { id } = useParams() as { id: string };
@@ -96,83 +97,71 @@ export default function AdminPatientDetailPage() {
 
   return (
     <DashboardShell
-      title={`Patient File: ${flow?.patient?.name || "Loading..."}`}
-      subtitle="Complete medical history and current status"
+      title={`Patient: ${flow?.patient?.name || "Loading..."}`}
+      subtitle="Complete medical history"
       headerActions={
-        <button className="btn btn-ghost" onClick={() => router.back()} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <ArrowLeft size={16} /> Back
+        <button className="btn btn-sm" onClick={() => router.back()}>
+          <ArrowLeft size={12} /> Back
         </button>
       }
     >
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-          <div className="spinner-lg spinner" />
+          <div className="spinner spinner-lg" />
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Status & Reassignment Card */}
-          <GlassCard padding="lg" delay={0}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--border)' }}>
+          <GlassCard padding="md" style={{ background: 'var(--bg)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <User size={20} color="var(--accent)" />
+                <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "1rem", fontWeight: 700, margin: '0 0 8px' }}>
                   {flow?.patient?.name}
                 </h3>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '0.875rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Current State:</span>
-                  <StatusBadge status={flow?.currentState || "UNKNOWN"} />
-                </div>
+                <StatusBadge status={flow?.currentState || "UNKNOWN"} />
               </div>
 
-              <div style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', minWidth: '250px' }}>
-                <div style={{ fontSize: '0.8125rem', fontWeight: 600, marginBottom: '8px', color: 'var(--text-secondary)' }}>
-                  Assigned Doctor
-                </div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <select 
-                    value={flow?.assignedDoctorId || ""} 
-                    onChange={handleReassign}
-                    disabled={assigning}
-                    style={{ flex: 1, padding: '8px 12px', fontSize: '0.875rem', borderRadius: 'var(--radius-sm)' }}
-                  >
-                    <option value="">No Doctor Assigned</option>
-                    {doctors.map(doc => (
-                      <option key={doc.id} value={doc.id}>{doc.name}</option>
-                    ))}
-                  </select>
-                  {assigning && <div className="spinner spinner-sm" />}
-                </div>
+              <div style={{ border: '1px solid var(--border)', padding: '12px', minWidth: '250px' }}>
+                <label>Assigned Doctor</label>
+                <select 
+                  value={flow?.assignedDoctorId || ""} 
+                  onChange={handleReassign}
+                  disabled={assigning}
+                >
+                  <option value="">No Doctor Assigned</option>
+                  {doctors.map(doc => (
+                    <option key={doc.id} value={doc.id}>{doc.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </GlassCard>
 
-          {/* Vitals */}
-          <GlassCard padding="none" delay={100} className="animate-slide-up">
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <HeartPulse size={18} color="var(--status-triage)" />
-              <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Vitals & Triage</h3>
+          <GlassCard padding="none" style={{ background: 'var(--bg)' }}>
+            <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+              <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+                Vitals & Triage ({vitals.length})
+              </h3>
             </div>
             <QueueTable columns={vitalCols} data={vitals as unknown as Record<string, unknown>[]} emptyMessage="No vitals recorded" />
           </GlassCard>
 
-          {/* Consultations */}
-          <GlassCard padding="none" delay={150} className="animate-slide-up">
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Stethoscope size={18} color="var(--status-doctor)" />
-              <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Consultation Notes</h3>
+          <GlassCard padding="none" style={{ background: 'var(--bg)' }}>
+            <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+              <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+                Consultation Notes ({notes.length})
+              </h3>
             </div>
             <QueueTable columns={noteCols} data={notes as unknown as Record<string, unknown>[]} emptyMessage="No notes on file" />
           </GlassCard>
 
-          {/* Lab Results */}
-          <GlassCard padding="none" delay={200} className="animate-slide-up">
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FlaskConical size={18} color="var(--status-lab)" />
-              <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Laboratory Results</h3>
+          <GlassCard padding="none" style={{ background: 'var(--bg)' }}>
+            <div style={{ padding: "16px", borderBottom: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+              <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+                Laboratory Results ({labs.length})
+              </h3>
             </div>
             <QueueTable columns={labCols} data={labs as unknown as Record<string, unknown>[]} emptyMessage="No lab tests ordered" />
           </GlassCard>
-
         </div>
       )}
     </DashboardShell>
