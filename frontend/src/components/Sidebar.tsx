@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import type { Role } from "@/lib/api";
 import { LayoutDashboard, Users, Stethoscope, FlaskConical, Pill, Activity, LogOut } from "lucide-react";
+import DarkModeToggle from "./DarkModeToggle";
 
 interface NavItem {
   label: string;
@@ -170,7 +171,7 @@ export default function Sidebar() {
                 gap: '12px',
                 padding: '12px 16px',
                 color: isActive ? 'var(--accent-text)' : 'var(--text)',
-                background: isActive ? '#fdf2f8' : 'transparent',
+                background: isActive ? 'var(--accent-bg)' : 'transparent',
                 textDecoration: 'none',
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.6875rem',
@@ -268,6 +269,15 @@ export default function Sidebar() {
           <LogOut size={14} />
           Sign Out
         </button>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginTop: '8px',
+          }}
+        >
+          <DarkModeToggle />
+        </div>
       </div>
     </aside>
   );

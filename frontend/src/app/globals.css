@@ -15,10 +15,31 @@
   --accent: #f9a8d4;
   --accent-border: #f472b6;
   --accent-text: #be185d;
+  --accent-bg: #fdf2f8;
+  --btn-hover-bg: #333333;
+  --btn-hover-text: #ffffff;
+  --overlay: rgba(0, 0, 0, 0.5);
   --success: #000000;
   --error: #000000;
   --font-mono: 'Space Mono', monospace;
   --font-sans: system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --bg-muted: #141414;
+  --text: #e5e5e5;
+  --text-muted: #737373;
+  --border: #2e2e2e;
+  --accent: #f9a8d4;
+  --accent-border: #f472b6;
+  --accent-text: #f9a8d4;
+  --accent-bg: #2a1520;
+  --btn-hover-bg: #e5e5e5;
+  --btn-hover-text: #0a0a0a;
+  --overlay: rgba(0, 0, 0, 0.75);
+  --success: #e5e5e5;
+  --error: #ef4444;
 }
 
 @theme inline {
@@ -114,13 +135,13 @@ body {
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--text);
-  color: var(--bg);
+  background: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
 }
 
 .btn:active:not(:disabled) {
-  background: #333;
-  color: var(--bg);
+  background: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
 }
 
 .btn:disabled {
@@ -134,7 +155,8 @@ body {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #333;
+  background: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
 }
 
 .btn-danger {
@@ -256,7 +278,7 @@ label {
 }
 
 .data-table tbody tr.selected td {
-  background: #fdf2f8;
+  background: var(--accent-bg);
 }
 
 .data-table tbody tr.selected td:first-child {
@@ -382,7 +404,7 @@ label {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay);
   display: flex;
   align-items: center;
   justify-content: center;
