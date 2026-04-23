@@ -22,6 +22,7 @@ RUN pnpm install --frozen-lockfile
 FROM node:22-alpine AS builder
 
 RUN npm install -g pnpm@10
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
@@ -39,6 +40,8 @@ RUN pnpm run build
 # Stage 3: Production
 # -----------------------------
 FROM node:22-alpine AS runner
+
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
