@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -11,6 +12,29 @@ services:
       - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: telemedicine_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/telemedicine?schema=public
+      JWT_SECRET: ${JWT_SECRET:-SUPER_SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-default_encryption_key_change_me}
+      PORT: 3001
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
