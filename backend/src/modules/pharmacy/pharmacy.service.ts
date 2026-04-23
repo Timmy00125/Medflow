@@ -37,15 +37,30 @@ export class PharmacyService {
         );
       }
 
-      const inventory = await tx.inventory.findUnique({
-        where: { drugName: rx.drugName },
+      const patientFlow = await tx.patientFlow.findUnique({
+        where: { patientId: rx.patientId },
+      });
+      if (!patientFlow) {
+        throw new BadRequestException('Patient flow not found');
+      }
+      if (
+        patientFlow.currentState !== 'AWAITING_PHARMACY' &&
+        patientFlow.currentState !== 'AWAITING_DOCTOR_REVIEW'
+      ) {
+        throw new BadRequestException('Patient is not in pharmacy queue');
+      }
+
+      const inventory = await tx.inventory.findFirst({
+        where: {
+          drugName: { equals: rx.drugName, mode: 'insensitive' },
+        },
       });
       if (!inventory || inventory.stock <= 0) {
         throw new BadRequestException(`Insufficient stock for ${rx.drugName}`);
       }
 
       await tx.inventory.update({
-        where: { drugName: rx.drugName },
+        where: { id: inventory.id },
         data: { stock: { decrement: 1 } },
       });
 
@@ -58,11 +73,24 @@ export class PharmacyService {
         },
       });
 
-      await this.queueService.advanceStateInTx(
-        tx,
-        updatedRx.patientId,
-        'AWAITING_DOCTOR_REVIEW',
-      );
+      const remainingRx = await tx.prescription.count({
+        where: {
+          patientId: rx.patientId,
+          status: 'PENDING',
+        },
+      });
+
+      if (
+        remainingRx === 0 &&
+        (patientFlow.currentState === 'AWAITING_PHARMACY' ||
+          patientFlow.currentState === 'AWAITING_DOCTOR_REVIEW')
+      ) {
+        await this.queueService.advanceStateInTx(
+          tx,
+          updatedRx.patientId,
+          'DISCHARGED',
+        );
+      }
 
       return updatedRx;
     });
