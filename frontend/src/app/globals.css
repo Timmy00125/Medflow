@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ════════════════════════════════════════════════════════════════════
@@ -21,8 +21,8 @@
   --overlay: rgba(0, 0, 0, 0.5);
   --success: #000000;
   --error: #000000;
-  --font-mono: 'Space Mono', monospace;
-  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-mono: 'Open Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Open Sans', system-ui, -apple-system, sans-serif;
 }
 
 [data-theme="dark"] {

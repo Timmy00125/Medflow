@@ -53,6 +53,9 @@ export default function AdminDashboard() {
     name: "",
     email: "",
     password: "",
+    patientIdNumber: "",
+    nextOfKinName: "",
+    nextOfKinPhone: "",
   });
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
@@ -109,7 +112,7 @@ export default function AdminDashboard() {
     try {
       await createPatient(patientForm);
       setFormSuccess(`Patient "${patientForm.name}" registered`);
-      setPatientForm({ name: "", email: "", password: "" });
+      setPatientForm({ name: "", email: "", password: "", patientIdNumber: "", nextOfKinName: "", nextOfKinPhone: "" });
       setShowPatientForm(false);
       fetchAll();
     } catch (err: unknown) {
@@ -267,6 +270,18 @@ export default function AdminDashboard() {
             <div>
               <label>Password</label>
               <input type="password" value={patientForm.password} onChange={(e) => setPatientForm({ ...patientForm, password: e.target.value })} placeholder="Password" required />
+            </div>
+            <div>
+              <label>Patient ID (optional)</label>
+              <input type="text" value={patientForm.patientIdNumber} onChange={(e) => setPatientForm({ ...patientForm, patientIdNumber: e.target.value })} placeholder="Auto-generated if empty" />
+            </div>
+            <div>
+              <label>Next of Kin Name</label>
+              <input type="text" value={patientForm.nextOfKinName} onChange={(e) => setPatientForm({ ...patientForm, nextOfKinName: e.target.value })} placeholder="Next of kin name" required />
+            </div>
+            <div>
+              <label>Next of Kin Phone</label>
+              <input type="tel" value={patientForm.nextOfKinPhone} onChange={(e) => setPatientForm({ ...patientForm, nextOfKinPhone: e.target.value })} placeholder="Next of kin phone" required />
             </div>
             <div style={{ gridColumn: "1 / -1", display: "flex", gap: "8px", justifyContent: "flex-end" }}>
               <button type="button" className="btn" onClick={() => setShowPatientForm(false)}>Cancel</button>

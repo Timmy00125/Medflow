@@ -26,7 +26,16 @@ export class QueueService {
         ...(where || {}),
       },
       include: {
-        patient: { select: { id: true, name: true, email: true } },
+        patient: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            patientIdNumber: true,
+            nextOfKinName: true,
+            nextOfKinPhone: true,
+          },
+        },
       },
       orderBy: { queueEnteredAt: 'asc' },
     });
@@ -35,7 +44,17 @@ export class QueueService {
   async getPatientState(patientId: string) {
     const flow = await this.prisma.client.patientFlow.findUnique({
       where: { patientId },
-      include: { patient: { select: { name: true, email: true } } },
+      include: {
+        patient: {
+          select: {
+            name: true,
+            email: true,
+            patientIdNumber: true,
+            nextOfKinName: true,
+            nextOfKinPhone: true,
+          },
+        },
+      },
     });
     if (!flow) throw new NotFoundException('Patient flow not found');
     return flow;

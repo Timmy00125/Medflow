@@ -37,6 +37,9 @@ export class UsersService {
         email: user.email,
         name: user.name,
         role: user.role,
+        patientIdNumber: user.patientIdNumber,
+        nextOfKinName: user.nextOfKinName,
+        nextOfKinPhone: user.nextOfKinPhone,
       },
     };
   }
@@ -71,13 +74,45 @@ export class UsersService {
       email: user.email,
       name: user.name,
       role: user.role,
+      patientIdNumber: user.patientIdNumber,
+      nextOfKinName: user.nextOfKinName,
+      nextOfKinPhone: user.nextOfKinPhone,
       patientFlow: user.patientFlow,
     };
   }
 
   async registerPatient(dto: CreatePatientDto) {
     const user = await this.createPatientAccount(dto);
-    return { id: user.id, email: user.email, name: user.name, role: user.role };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      patientIdNumber: user.patientIdNumber,
+      nextOfKinName: user.nextOfKinName,
+      nextOfKinPhone: user.nextOfKinPhone,
+    };
+  }
+
+  async findPatientByIdNumber(patientIdNumber: string) {
+    const user = await this.prisma.client.user.findUnique({
+      where: { patientIdNumber },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        patientIdNumber: true,
+        nextOfKinName: true,
+        nextOfKinPhone: true,
+        patientFlow: true,
+        createdAt: true,
+      },
+    });
+    if (!user || user.role !== 'PATIENT') {
+      throw new NotFoundException('Patient not found');
+    }
+    return user;
   }
 
   async findStaff() {
@@ -142,12 +177,34 @@ export class UsersService {
     };
   }
 
+  private async generatePatientIdNumber(): Promise<string> {
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    const candidate = `PAT-${randomNum}`;
+    const existing = await this.prisma.client.user.findUnique({
+      where: { patientIdNumber: candidate },
+    });
+    if (existing) {
+      return this.generatePatientIdNumber();
+    }
+    return candidate;
+  }
+
   private async createPatientAccount(dto: CreatePatientDto) {
     const existingUser = await this.prisma.client.user.findUnique({
       where: { email: dto.email },
     });
     if (existingUser) throw new BadRequestException('Email already in use');
 
+    if (dto.patientIdNumber) {
+      const existingId = await this.prisma.client.user.findUnique({
+        where: { patientIdNumber: dto.patientIdNumber },
+      });
+      if (existingId)
+        throw new BadRequestException('Patient ID number already in use');
+    }
+
+    const patientIdNumber =
+      dto.patientIdNumber || (await this.generatePatientIdNumber());
     const hashedPassword = await argon2.hash(dto.password);
     return this.prisma.client.user.create({
       data: {
@@ -155,6 +212,9 @@ export class UsersService {
         name: dto.name,
         password: hashedPassword,
         role: 'PATIENT',
+        patientIdNumber,
+        nextOfKinName: dto.nextOfKinName,
+        nextOfKinPhone: dto.nextOfKinPhone,
         patientFlow: {
           create: {
             currentState: 'AWAITING_TRIAGE',

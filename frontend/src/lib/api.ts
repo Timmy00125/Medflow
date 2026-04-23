@@ -28,6 +28,9 @@ export interface UserPayload {
   email: string;
   name: string;
   role: Role;
+  patientIdNumber?: string;
+  nextOfKinName?: string;
+  nextOfKinPhone?: string;
 }
 
 export interface LoginResponse {
@@ -44,7 +47,14 @@ export interface PatientFlow {
   assignedPharmId: string | null;
   queueEnteredAt: string;
   updatedAt: string;
-  patient?: { id: string; name: string; email?: string };
+  patient?: {
+    id: string;
+    name: string;
+    email?: string;
+    patientIdNumber?: string;
+    nextOfKinName?: string;
+    nextOfKinPhone?: string;
+  };
 }
 
 export interface StaffMember {
@@ -246,6 +256,8 @@ export async function signupPatient(data: {
   email: string;
   name: string;
   password: string;
+  nextOfKinName: string;
+  nextOfKinPhone: string;
 }): Promise<UserPayload> {
   return fetchApi<UserPayload>("/auth/signup/patient", {
     method: "POST",
@@ -309,11 +321,22 @@ export async function createPatient(data: {
   email: string;
   name: string;
   password: string;
+  patientIdNumber?: string;
+  nextOfKinName: string;
+  nextOfKinPhone: string;
 }): Promise<UserPayload & { patientFlow: PatientFlow }> {
   return fetchApi("/users/patient", {
     method: "POST",
     body: JSON.stringify(data),
   });
+}
+
+export async function searchPatientByIdNumber(
+  patientIdNumber: string,
+): Promise<
+  UserPayload & { patientFlow: PatientFlow | null; createdAt: string }
+> {
+  return fetchApi(`/users/patient/search/${encodeURIComponent(patientIdNumber)}`);
 }
 
 // ═══════════════════════════════════════════

@@ -40,4 +40,10 @@ export class UsersController {
   getStaffHistory(@Param('id') id: string) {
     return this.usersService.getStaffHistory(id);
   }
+
+  @Get('patient/search/:patientIdNumber')
+  @Roles('ADMIN', 'DOCTOR', 'NURSE', 'LAB_TECH', 'PHARMACIST')
+  searchPatient(@Param('patientIdNumber') patientIdNumber: string) {
+    return this.usersService.findPatientByIdNumber(patientIdNumber);
+  }
 }

@@ -1,15 +1,25 @@
 // @ts-nocheck
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import * as crypto from 'crypto';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '12345678901234567890123456789012'; // 32 bytes
+const ENCRYPTION_KEY =
+  process.env.ENCRYPTION_KEY || '12345678901234567890123456789012'; // 32 bytes
 const IV_LENGTH = 16;
 
 function encrypt(text: string | null): string | null {
   if (!text) return text;
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+  const cipher = crypto.createCipheriv(
+    'aes-256-cbc',
+    Buffer.from(ENCRYPTION_KEY),
+    iv,
+  );
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   return `${iv.toString('hex')}:${encrypted}`;
@@ -23,7 +33,11 @@ function decrypt(text: string | null): string | null {
   if (!ivStr) return text;
   const iv = Buffer.from(ivStr, 'hex');
   const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+  const decipher = crypto.createDecipheriv(
+    'aes-256-cbc',
+    Buffer.from(ENCRYPTION_KEY),
+    iv,
+  );
   let decrypted = decipher.update(encryptedText);
   decrypted = Buffer.concat([decrypted, decipher.final()]);
   return decrypted.toString('utf8');
@@ -35,7 +49,7 @@ function getExtendedClient(prisma: PrismaClient) {
       consultationNote: {
         async create({ args, query }) {
           if (args.data.notes) {
-            args.data.notes = encrypt(args.data.notes as string) as string;
+            args.data.notes = encrypt(args.data.notes) as string;
           }
           return query(args);
         },
@@ -49,13 +63,15 @@ function getExtendedClient(prisma: PrismaClient) {
       labTest: {
         async create({ args, query }) {
           if (args.data.resultData) {
-            args.data.resultData = encrypt(args.data.resultData as string) as string;
+            args.data.resultData = encrypt(args.data.resultData) as string;
           }
           return query(args);
         },
         async update({ args, query }) {
           if (args.data.resultData) {
-            args.data.resultData = encrypt(args.data.resultData as string) as string;
+            args.data.resultData = encrypt(
+              args.data.resultData as string,
+            ) as string;
           }
           return query(args);
         },
@@ -84,7 +100,10 @@ function getExtendedClient(prisma: PrismaClient) {
 }
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PrismaService.name);
   public client: ReturnType<typeof getExtendedClient>;
 

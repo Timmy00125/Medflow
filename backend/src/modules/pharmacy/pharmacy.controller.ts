@@ -24,16 +24,16 @@ export class PharmacyController {
 
   @Post(':rxId/dispense')
   @Roles('PHARMACIST', 'ADMIN')
-  dispense(
-    @CurrentUser() user: any,
-    @Param('rxId') rxId: string,
-  ) {
+  dispense(@CurrentUser() user: any, @Param('rxId') rxId: string) {
     return this.pharmacyService.dispense(rxId, user.id);
   }
 
   @Post('inventory')
   @Roles('PHARMACIST', 'ADMIN')
-  addInventory(@Body('drugName') drugName: string, @Body('quantity') quantity: number) {
+  addInventory(
+    @Body('drugName') drugName: string,
+    @Body('quantity') quantity: number,
+  ) {
     return this.pharmacyService.addInventory(drugName, quantity);
   }
 

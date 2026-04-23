@@ -117,6 +117,14 @@ export default function AdminPatientDetailPage() {
                 <h3 style={{ fontFamily: "var(--font-mono)", fontSize: "1rem", fontWeight: 700, margin: '0 0 8px' }}>
                   {flow?.patient?.name}
                 </h3>
+                <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--text-muted)", margin: '0 0 8px' }}>
+                  ID: {flow?.patient?.patientIdNumber ?? "N/A"}
+                </p>
+                {flow?.patient?.nextOfKinName && (
+                  <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--text-muted)", margin: '0 0 8px' }}>
+                    Next of Kin: {flow.patient.nextOfKinName} — {flow.patient.nextOfKinPhone}
+                  </p>
+                )}
                 <StatusBadge status={flow?.currentState || "UNKNOWN"} />
               </div>
 

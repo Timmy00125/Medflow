@@ -18,9 +18,9 @@ export class PharmacyService {
 
   async getAllPrescriptions() {
     return this.prisma.client.prescription.findMany({
-      include: { 
+      include: {
         patient: { select: { id: true, name: true } },
-        pharmacist: { select: { id: true, name: true } }
+        pharmacist: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
     });

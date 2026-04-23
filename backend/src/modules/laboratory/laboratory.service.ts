@@ -18,9 +18,9 @@ export class LaboratoryService {
 
   async getAllTests() {
     return this.prisma.client.labTest.findMany({
-      include: { 
+      include: {
         patient: { select: { id: true, name: true } },
-        labTech: { select: { id: true, name: true } }
+        labTech: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
     });

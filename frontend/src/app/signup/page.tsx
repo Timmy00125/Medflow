@@ -13,6 +13,8 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nextOfKinName, setNextOfKinName] = useState('');
+  const [nextOfKinPhone, setNextOfKinPhone] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,7 +30,7 @@ export default function SignupPage() {
     setSubmitting(true);
 
     try {
-      await signupPatient({ name, email, password });
+      await signupPatient({ name, email, password, nextOfKinName, nextOfKinPhone });
       await login(email, password);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Signup failed. Please try again.');
@@ -55,7 +57,7 @@ export default function SignupPage() {
           width: '520px',
           height: '520px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(34, 211, 238, 0.06) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(0, 0, 0, 0.04) 0%, transparent 70%)',
           top: '-160px',
           right: '-100px',
           pointerEvents: 'none' as const,
@@ -67,7 +69,7 @@ export default function SignupPage() {
           width: '420px',
           height: '420px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(167, 139, 250, 0.05) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(0, 0, 0, 0.03) 0%, transparent 70%)',
           bottom: '-120px',
           left: '-100px',
           pointerEvents: 'none' as const,
@@ -208,6 +210,30 @@ export default function SignupPage() {
                 style={{ paddingLeft: '38px' }}
               />
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="signup-next-of-kin-name">Next of Kin Name</label>
+            <input
+              id="signup-next-of-kin-name"
+              type="text"
+              value={nextOfKinName}
+              onChange={(e) => setNextOfKinName(e.target.value)}
+              placeholder="Full name of next of kin"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="signup-next-of-kin-phone">Next of Kin Phone</label>
+            <input
+              id="signup-next-of-kin-phone"
+              type="tel"
+              value={nextOfKinPhone}
+              onChange={(e) => setNextOfKinPhone(e.target.value)}
+              placeholder="Phone number"
+              required
+            />
           </div>
 
           {error && (

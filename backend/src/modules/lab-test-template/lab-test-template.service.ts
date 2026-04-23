@@ -12,7 +12,9 @@ export class LabTestTemplateService {
   }
 
   async create(name: string, description?: string, category?: string) {
-    const existing = await this.prisma.client.labTestTemplate.findUnique({ where: { name } });
+    const existing = await this.prisma.client.labTestTemplate.findUnique({
+      where: { name },
+    });
     if (existing) {
       throw new ConflictException('Lab test with this name already exists');
     }

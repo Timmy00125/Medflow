@@ -26,13 +26,16 @@ enum DepartmentState {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid())
+  email           String   @unique
+  password        String
+  name            String
+  role            Role
+  patientIdNumber String?  @unique
+  nextOfKinName   String?
+  nextOfKinPhone  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relationships
   patientFlow            PatientFlow?       @relation("PatientFlowUser")

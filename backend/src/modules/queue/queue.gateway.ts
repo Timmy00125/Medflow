@@ -1,4 +1,9 @@
-import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -24,6 +29,8 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   broadcastPatientSpecificUpdate(patientId: string) {
-    this.server.emit(`patientUpdate-${patientId}`, { timestamp: new Date().toISOString() });
+    this.server.emit(`patientUpdate-${patientId}`, {
+      timestamp: new Date().toISOString(),
+    });
   }
 }

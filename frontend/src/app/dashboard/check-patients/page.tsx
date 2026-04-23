@@ -34,7 +34,14 @@ interface PatientQueueRow {
   patientId: string;
   currentState: DepartmentState;
   queueEnteredAt: string;
-  patient?: { id: string; name: string; email?: string };
+  patient?: {
+    id: string;
+    name: string;
+    email?: string;
+    patientIdNumber?: string;
+    nextOfKinName?: string;
+    nextOfKinPhone?: string;
+  };
   sourceQueues: string[];
 }
 
@@ -295,7 +302,13 @@ export default function CheckPatientsPage() {
     return queueRows.filter((row) => {
       const patientName = row.patient?.name?.toLowerCase() ?? "";
       const patientEmail = row.patient?.email?.toLowerCase() ?? "";
-      return patientName.includes(search) || patientEmail.includes(search) || row.patientId.includes(search);
+      const patientIdNumber = row.patient?.patientIdNumber?.toLowerCase() ?? "";
+      return (
+        patientName.includes(search) ||
+        patientEmail.includes(search) ||
+        patientIdNumber.includes(search) ||
+        row.patientId.includes(search)
+      );
     });
   }, [query, queueRows]);
 
@@ -401,11 +414,25 @@ export default function CheckPatientsPage() {
                     {selectedPatient.patient?.name ?? "Unknown patient"}
                   </h3>
                   <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.5625rem", color: "var(--text-muted)", margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    {selectedPatient.patient?.patientIdNumber ?? "No ID"}
+                  </p>
+                  <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.5625rem", color: "var(--text-muted)", margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     {selectedPatient.patient?.email ?? "No email"}
                   </p>
                 </div>
                 <StatusBadge status={selectedPatient.currentState} />
               </div>
+
+              {selectedPatient.patient?.nextOfKinName && (
+                <div style={{ marginBottom: "16px", padding: "10px", border: "1px solid var(--border)", background: "var(--bg-muted)" }}>
+                  <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.5625rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)", margin: "0 0 4px" }}>
+                    Next of Kin
+                  </p>
+                  <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", margin: 0 }}>
+                    {selectedPatient.patient.nextOfKinName} — {selectedPatient.patient.nextOfKinPhone}
+                  </p>
+                </div>
+              )}
 
               {historyLoading ? (
                 <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>

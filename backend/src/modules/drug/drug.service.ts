@@ -12,7 +12,9 @@ export class DrugService {
   }
 
   async create(name: string, description?: string) {
-    const existing = await this.prisma.client.drug.findUnique({ where: { name } });
+    const existing = await this.prisma.client.drug.findUnique({
+      where: { name },
+    });
     if (existing) {
       throw new ConflictException('Drug with this name already exists');
     }

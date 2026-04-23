@@ -46,6 +46,11 @@ export class ConsultationController {
     @Body('drugName') drugName: string,
     @Body('dosage') dosage: string,
   ) {
-    return this.consultationService.prescribeDrug(user.id, patientId, drugName, dosage);
+    return this.consultationService.prescribeDrug(
+      user.id,
+      patientId,
+      drugName,
+      dosage,
+    );
   }
 }
