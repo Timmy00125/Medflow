@@ -38,6 +38,7 @@ import {
   History,
   CheckCircle,
   User,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function DoctorDashboard() {
@@ -190,7 +191,39 @@ export default function DoctorDashboard() {
   };
 
   const queueColumns: QueueColumn[] = [
-    { key: 'patient.name', label: 'Patient' },
+    {
+      key: 'patient.name',
+      label: 'Patient',
+      render: (_value, row) => {
+        const flow = row as unknown as PatientFlow;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>{flow.patient?.name ?? '—'}</span>
+            {flow.isCritical && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 6px',
+                  fontSize: '0.5625rem',
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-mono)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: '1px solid #dc2626',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <AlertTriangle size={10} /> Critical
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
     { key: 'currentState', label: 'Status' },
     {
       key: 'queueEnteredAt',
@@ -207,7 +240,7 @@ export default function DoctorDashboard() {
   return (
     <DashboardShell
       title="Doctor Desk"
-      subtitle={`${queue.length} patients in your queue`}
+      subtitle={`${queue.length} patients in your queue${queue.some(q => q.isCritical) ? ` · ${queue.filter(q => q.isCritical).length} critical` : ''}`}
       headerActions={
         <button onClick={fetchData} className="btn btn-sm">
           <RefreshCw size={12} /> Refresh
@@ -256,9 +289,32 @@ export default function DoctorDashboard() {
               <GlassCard padding="none" style={{ background: 'var(--bg)' }}>
                 <div style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 700, margin: 0 }}>
-                      {selectedPatient.patient?.name}
-                    </h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+                        {selectedPatient.patient?.name}
+                      </h2>
+                      {selectedPatient.isCritical && (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '2px 6px',
+                            fontSize: '0.5625rem',
+                            fontWeight: 700,
+                            fontFamily: 'var(--font-mono)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            background: '#dc2626',
+                            color: '#ffffff',
+                            border: '1px solid #dc2626',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          <AlertTriangle size={10} /> Critical
+                        </span>
+                      )}
+                    </div>
                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', color: 'var(--text-muted)', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       ID: {selectedPatient.patientId.slice(0, 8)}…
                     </p>

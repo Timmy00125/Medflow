@@ -1,22 +1,18 @@
-# Improvements to Add
+### Critical Patient Priority System
 
-Based on an initial codebase investigation, here are several areas for improvement that should be addressed:
+The system should include a critical priority flag that enables nurses to quickly identify and escalate urgent cases. This feature works as follows:
 
-## 1. Security & Privacy
-*   **Encrypt Sensitive PII Data**: Sensitive Patient Information (PII) such as `ConsultationNote.notes` and `LabTest.resultData` are currently stored as plain strings in Prisma (`backend/prisma/schema.prisma`). These should be encrypted at rest.
-*   **CORS Configuration**: CORS origins in `backend/src/main.ts` are hardcoded to `localhost`, which will break in production. These should be managed via environment variables.
-*   **Role-Based Access Control (RBAC)**: While the `Role` enum is present in the database schema, we need to verify its consistent implementation across all controllers to ensure secure access.
-*   **Password Hashing Auditing**: Audit the `UsersService` to ensure passwords are properly hashed before storing in the database.
+**Nurse Workflow:**
+- When a patient's condition becomes critical, the nurse can mark the patient as critical with a single action—no need to enter vitals
+- The system automatically assigns a critical priority flag to the patient's record
+- The nurse then assigns an appropriate doctor to the patient
 
-## 2. Error Handling & Validation
-*   **Global Validation Pipe**: `backend/src/main.ts` does not explicitly enable `ValidationPipe` globally, meaning unvalidated DTOs might be entering the system.
-*   **Global Exception Filter**: A global exception filter is missing in the bootstrap process, which can lead to inconsistent error response formats across the API.
+**Doctor Workflow:**
+- The doctor dashboard displays all critical patients with a visible critical flag
+- Critical patients appear at the top of the doctor's patient list for immediate attention
 
-## 3. Architecture & Consistency
-*   **Transaction Management**: The project architecture is standard NestJS, but the relationship between patient flows (e.g., Pharmacy, Lab) suggests a need for robust database transaction management to ensure state consistency during complex operations.
-
-## 4. Testing
-*   **Increase Test Coverage**: The file tree shows very few `.spec.ts` files relative to the number of modules. Significant effort should be invested into adding unit and integration tests.
-
-## 5. Frontend UI/UX
-*   **Consistent Error Feedback**: Ensure that the frontend correctly handles errors from the `AuthContext` and `api.ts` layers to provide consistent and helpful feedback to the user.
+**Benefits:**
+- Ensures timely medical attention for patients in critical condition
+- Reduces response time by allowing nurses to flag urgent cases instantly
+- Helps medical staff prioritize workload efficiently
+- Improves overall patient outcomes through faster care delivery

@@ -37,7 +37,7 @@ export class QueueService {
           },
         },
       },
-      orderBy: { queueEnteredAt: 'asc' },
+      orderBy: [{ isCritical: 'desc' }, { queueEnteredAt: 'asc' }],
     });
   }
 
@@ -110,6 +110,20 @@ export class QueueService {
     return this.advanceState(patientId, 'AWAITING_DOCTOR', {
       assignedDoctorId: doctorId,
     });
+  }
+
+  async markCritical(patientId: string, isCritical: boolean) {
+    const flow = await this.prisma.client.patientFlow.findUnique({
+      where: { patientId },
+    });
+    if (!flow) throw new NotFoundException('Patient flow not found');
+
+    const updated = await this.prisma.client.patientFlow.update({
+      where: { patientId },
+      data: { isCritical },
+    });
+    this.emitQueueStateChanged(patientId);
+    return updated;
   }
 
   async advanceStateInTx(

@@ -42,6 +42,7 @@ export interface PatientFlow {
   id: string;
   patientId: string;
   currentState: DepartmentState;
+  isCritical: boolean;
   assignedDoctorId: string | null;
   assignedLabId: string | null;
   assignedPharmId: string | null;
@@ -385,6 +386,16 @@ export async function assignPatientToDoctor(
   return fetchApi<PatientFlow>(`/queue/assign-doctor/${patientId}`, {
     method: "POST",
     body: JSON.stringify({ doctorId }),
+  });
+}
+
+export async function markPatientCritical(
+  patientId: string,
+  isCritical: boolean,
+): Promise<PatientFlow> {
+  return fetchApi<PatientFlow>(`/queue/critical/${patientId}`, {
+    method: "PUT",
+    body: JSON.stringify({ isCritical }),
   });
 }
 

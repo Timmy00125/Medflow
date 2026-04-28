@@ -55,6 +55,7 @@ model PatientFlow {
   patient          User            @relation("PatientFlowUser", fields: [patientId], references: [id], onDelete: Cascade)
   patientId        String          @unique
   currentState     DepartmentState @default(AWAITING_TRIAGE)
+  isCritical       Boolean         @default(false)
   assignedDoctorId String?
   assignedLabId    String?
   assignedPharmId  String?

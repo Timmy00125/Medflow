@@ -90,4 +90,13 @@ export class QueueController {
   ) {
     return this.queueService.assignPatientToDoctor(patientId, doctorId);
   }
+
+  @Put('critical/:patientId')
+  @Roles('ADMIN', 'NURSE')
+  markCritical(
+    @Param('patientId') patientId: string,
+    @Body('isCritical') isCritical: boolean,
+  ) {
+    return this.queueService.markCritical(patientId, isCritical);
+  }
 }

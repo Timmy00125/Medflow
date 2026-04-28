@@ -14,6 +14,7 @@ import {
   advancePatient,
   assignPatientToDoctor,
   recordVitals,
+  markPatientCritical,
   type PatientFlow,
   type StaffMember,
   type Vitals,
@@ -24,6 +25,7 @@ import {
   RefreshCw,
   X,
   CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function NurseDashboard() {
@@ -128,8 +130,61 @@ export default function NurseDashboard() {
     }
   };
 
+  const handleToggleCritical = async (patient: PatientFlow) => {
+    setActionLoading(true);
+    setSuccessMsg("");
+    setErrorMsg("");
+    try {
+      await markPatientCritical(patient.patientId, !patient.isCritical);
+      setSuccessMsg(
+        patient.isCritical
+          ? "Critical flag removed"
+          : "Patient marked as critical",
+      );
+      fetchQueues();
+    } catch (err: unknown) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Failed to update critical status",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const triageColumns: QueueColumn[] = [
-    { key: "patient.name", label: "Patient" },
+    {
+      key: "patient.name",
+      label: "Patient",
+      render: (_value, row) => {
+        const patient = row as unknown as PatientFlow;
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span>{patient.patient?.name ?? "—"}</span>
+            {patient.isCritical && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "2px 6px",
+                  fontSize: "0.5625rem",
+                  fontWeight: 700,
+                  fontFamily: "var(--font-mono)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  background: "#dc2626",
+                  color: "#ffffff",
+                  border: "1px solid #dc2626",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <AlertTriangle size={10} /> Critical
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
     { key: "currentState", label: "Status" },
     {
       key: "queueEnteredAt",
@@ -255,7 +310,19 @@ export default function NurseDashboard() {
             actions={(row) => {
               const patient = row as unknown as PatientFlow;
               return (
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "4px" }}>
+                  <button
+                    className={`btn btn-sm ${patient.isCritical ? "btn-danger" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleCritical(patient);
+                    }}
+                    disabled={actionLoading}
+                    title={patient.isCritical ? "Remove critical flag" : "Mark as critical"}
+                  >
+                    <AlertTriangle size={12} />
+                    {patient.isCritical ? "Unmark" : "Critical"}
+                  </button>
                   <button
                     className="btn btn-sm"
                     onClick={(e) => {
